@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 修改前，随机位置 -->
+<!-- 只显示左方第一位玩家 -->
 <html>
 
 <head>
@@ -305,24 +305,27 @@
 
         console.log(33.46467111824269 + 0.03 + randomNum(0.01, 0.09));
         // loadLeftPlayerPoint();      //加载蓝方
-        var countDownTimer=undefined;  //倒计时计时器
-        var loadLeftPlayerTimer=undefined;  //加载更新左方队员位置计时器
+        var countDownTimer = undefined;  //倒计时计时器
+        var loadLeftPlayerTimer = undefined;  //加载更新左方队员位置计时器
 
-        var path=[];    //路径
+        var path = [];    //路径
         window.onload = function () {
             // 每秒钟更新倒计时
-            countDownTimer=setInterval(updateCountdown, 1000);
+            countDownTimer = setInterval(updateCountdown, 1000);
             updatePlayersHpDisplay();
 
             loadMap();                  //加载地图
-            loadLeftPlayerTimer=setInterval(loadLeftPlayerPoint, 1000);
-
+            // loadLeftPlayerTimer=setInterval(loadLeftPlayerPoint, 1000);
             // loadLeftPlayerPoint();      //加载蓝方
-            //加载红方
+
+            firstLoadPalyer();//加载到一个li
+
             CountBluePlayersSurvivorsNumber();  //蓝方幸存人数
             CountRedPlayersSurvivorsNumber();//红方幸存人数
             ajaxTest();
             clickPlayerIconEvent();
+
+
 
         };
 
@@ -332,15 +335,9 @@
             document.querySelector("#map").style.height = '745px';
             // document.querySelector("#map").style.width = document.documentElement.clientWidth + 'px';
             document.querySelector("#map").style.width = '1519px';
-
-
-
-
-
-
             //利用leaflet显示瓦片地图
             var tileLayer = L.tileLayer('http://localhost:8080/MyMap/newtask/{z}/{x}/{y}.jpg', {
-                minZoom: 3,
+                minZoom: 10,
                 maxZoom: 13,
                 tileSize: 256, // 瓦片尺寸，通常为256像素
                 //zoomOffset: 3, // 瓦片层级的偏移值，用于调整实际层级与显示层级之间的关系
@@ -357,6 +354,7 @@
             if (markerList.length != 5) {
 
                 for (let i = 0; i < liList.length; i++) {
+
 
                     // console.log(liList[i].querySelector('img').getAttribute('src'));
                     var Icon = L.icon({
@@ -375,22 +373,43 @@
                 //     marker.setLatLng(newLatlngPoint);
                 // });
 
-
-
-
                 var newLatlngPoint = L.latLng(33.46467111824269 + randomNum(0.01, 0.09), 118.95996093750001 + randomNum(0.01, 0.09));
                 markerList[0].setLatLng(newLatlngPoint);
 
-                // markerList[0].on("move",function(res){
-                markerList[0].on("move",res=>{
-                    path.push([res.latlng.lat,res.latlng.lng]);
-                    L.polyline(path,{color:"skyblue",weight:2}).addTo(this.map);
-                })
+                // markerList[0].on("move",res=>{
+                // // markerList[0].on("move",res=>{
+                //     path.push([res.latlng.lat,res.latlng.lng]);
+                //     // path.length > 1 && path.shift();
+                //     // L.polyline(path,{color:"skyblue",weight:2}).addTo(this.map);
+                // })
 
 
             }
 
 
+        }
+
+        function firstLoadPalyer() {
+            var ul = document.querySelector(".leftPlayers");
+            var Icon = L.icon({
+                iconUrl: ul.querySelector("li:nth-child(1) img").getAttribute('src'),
+                iconSize: [20],
+                className: "leftPlayerIcon playersIcon"         //为自定义标记点图标添加类名
+            })
+            var latlngPoint = L.latLng(33.46467111824269 + + randomNum(0.01, 0.09), 118.95996093750001 + randomNum(0.01, 0.09));
+            var marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);
+            markerList.push(marker);
+
+        }
+
+
+        function markerMove() {
+            markerList[0].on("move", res => {
+                // markerList[0].on("move",res=>{
+                path.push([res.latlng.lat, res.latlng.lng]);
+                // path.length > 1 && path.shift();
+                // L.polyline(path,{color:"skyblue",weight:2}).addTo(this.map);
+            })
         }
 
 
@@ -413,7 +432,6 @@
                     updatePlayersHpDisplay();
                     CountBluePlayersSurvivorsNumber();
                     CountRedPlayersSurvivorsNumber();
-
                     console.log(event.getAttribute('data-hp'));
                 });
             });
@@ -428,7 +446,6 @@
 
             }
         }
-
         // 更新倒计时
         function updateCountdown() {
             var currentTime = new Date();
@@ -454,7 +471,6 @@
             // 显示倒计时
             document.getElementById("countdown").textContent = minutes + ":" + seconds + "";
         }
-
         function CountBluePlayersSurvivorsNumber() {
             var survivors = 0;
             var liList = document.querySelector(".leftPlayers").querySelectorAll("li")
@@ -517,57 +533,6 @@
         function randomNum(min, max) {
             return Math.random() * (max - min) + min;
         }
-
-
-        
-
-
-
-
-
-
-
-        // function clickMapEvent() {
-        //     var Icon = L.icon({
-        //         iconUrl: "./icon/icon.jpg",
-        //         iconSize: [20],
-        //         className: "playerIcon"         //为自定义标记点图标添加类名
-        //     })
-
-        //     // map.on('click', function (event) {
-        //     //     // 获取点击位置的地理坐标
-        //     //     if (marker == undefined) {
-        //     //         var latlng = event.latlng;
-        //     //         console.log(latlng);
-
-        //     //         marker = L.marker(latlng, { icon: Icon }).addTo(map);
-        //     //     }
-        //     //     // // 将地理坐标转换为瓦片图的行列号
-        //     //     // var tileSize = 256; // 瓦片大小
-        //     //     // var zoom = map.getZoom(); // 当前缩放级别
-        //     //     // var tileCoordinate = map.project(latlng, zoom).divideBy(tileSize).floor();
-
-        //     //     // // 打印瓦片图行列号
-        //     //     // console.log('Clicked tile coordinates:', tileCoordinate);
-        //     // });
-
-        //     //测试直接添加指定位置锚点
-        //     var latlngPoint = L.latLng(33.46467111824269, 118.95996093750001);
-        //     marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);
-        // };
-
-
-        // function removeMarkerEvent() {
-        //     document.querySelector('#remove_marker').onclick = function () {
-        //         //将此标注从地图中删除
-        //         marker.remove();
-        //         marker = undefined;
-        //     }
-        // };
-
-
-
-
 
     </script>
 </body>
