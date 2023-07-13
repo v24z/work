@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 只显示左方第一位玩家 -->
+
 <html>
 
 <head>
@@ -301,14 +301,16 @@
         var markerList = [];//锚点列表
 
         var targetTime = new Date();                        //当前时间
-        targetTime.setMinutes(targetTime.getMinutes() + 60); //设置时间
+        targetTime.setMinutes(targetTime.getMinutes() + 1); //设置时间
 
-        console.log(33.46467111824269 + 0.03 + randomNum(0.01, 0.09));
         // loadLeftPlayerPoint();      //加载蓝方
         var countDownTimer = undefined;  //倒计时计时器
         var loadLeftPlayerTimer = undefined;  //加载更新左方队员位置计时器
 
-        var path = [];    //路径
+        // 创建 Polyline 图层
+        var polyline = L.polyline([], { color: 'red' }).addTo(map);
+
+        let path = [];    // 声明绘制线的临时使用变量
         window.onload = function () {
             // 每秒钟更新倒计时
             countDownTimer = setInterval(updateCountdown, 1000);
@@ -319,13 +321,13 @@
             // loadLeftPlayerPoint();      //加载蓝方
 
             firstLoadPalyer();//加载到一个li
+            setInterval(markerMove, 5000, markerList[0]);
+
 
             CountBluePlayersSurvivorsNumber();  //蓝方幸存人数
             CountRedPlayersSurvivorsNumber();//红方幸存人数
             ajaxTest();
             clickPlayerIconEvent();
-
-
 
         };
 
@@ -337,7 +339,7 @@
             document.querySelector("#map").style.width = '1519px';
             //利用leaflet显示瓦片地图
             var tileLayer = L.tileLayer('http://localhost:8080/MyMap/newtask/{z}/{x}/{y}.jpg', {
-                minZoom: 10,
+                minZoom: 5,
                 maxZoom: 13,
                 tileSize: 256, // 瓦片尺寸，通常为256像素
                 //zoomOffset: 3, // 瓦片层级的偏移值，用于调整实际层级与显示层级之间的关系
@@ -349,44 +351,16 @@
         function loadLeftPlayerPoint() {
             var leftPlayersList = document.querySelector(".leftPlayers");
             var liList = leftPlayersList.querySelectorAll("li");
-            // var img = liList[0].querySelectorAll('img');
-
-            if (markerList.length != 5) {
-
-                for (let i = 0; i < liList.length; i++) {
-
-
-                    // console.log(liList[i].querySelector('img').getAttribute('src'));
-                    var Icon = L.icon({
-                        iconUrl: liList[i].querySelector('img').getAttribute('src'),
-                        iconSize: [20],
-                        className: "leftPlayerIcon playersIcon"         //为自定义标记点图标添加类名
-                    })
-                    var latlngPoint = L.latLng(33.46467111824269 + 0.03 * i + randomNum(0.01, 0.09), 118.95996093750001 + 0.03 * i + randomNum(0.01, 0.09));
-                    var marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);
-                    markerList.push(marker);
-                }
+            for (let i = 0; i < liList.length; i++) {
+                var Icon = L.icon({
+                    iconUrl: liList[i].querySelector('img').getAttribute('src'),
+                    iconSize: [20],
+                    className: "leftPlayerIcon playersIcon"         //为自定义标记点图标添加类名
+                })
+                var latlngPoint = L.latLng(randomNum(33.464671, 33.664671), randomNum(118.859960, 118.959960));
+                var marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);
+                markerList.push(marker);
             }
-            else {
-                // markerList.forEach(function (marker) {
-                //     var newLatlngPoint = L.latLng(33.46467111824269 + randomNum(0.01, 0.09), 118.95996093750001 + randomNum(0.01, 0.09));
-                //     marker.setLatLng(newLatlngPoint);
-                // });
-
-                var newLatlngPoint = L.latLng(33.46467111824269 + randomNum(0.01, 0.09), 118.95996093750001 + randomNum(0.01, 0.09));
-                markerList[0].setLatLng(newLatlngPoint);
-
-                // markerList[0].on("move",res=>{
-                // // markerList[0].on("move",res=>{
-                //     path.push([res.latlng.lat,res.latlng.lng]);
-                //     // path.length > 1 && path.shift();
-                //     // L.polyline(path,{color:"skyblue",weight:2}).addTo(this.map);
-                // })
-
-
-            }
-
-
         }
 
         function firstLoadPalyer() {
@@ -396,26 +370,14 @@
                 iconSize: [20],
                 className: "leftPlayerIcon playersIcon"         //为自定义标记点图标添加类名
             })
-            var latlngPoint = L.latLng(33.46467111824269 + + randomNum(0.01, 0.09), 118.95996093750001 + randomNum(0.01, 0.09));
+            var latlngPoint = L.latLng(randomNum(33.464671, 33.664671), randomNum(118.859960, 118.959960));
             var marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);
             markerList.push(marker);
 
         }
-
-
-        function markerMove() {
-            markerList[0].on("move", res => {
-                // markerList[0].on("move",res=>{
-                path.push([res.latlng.lat, res.latlng.lng]);
-                // path.length > 1 && path.shift();
-                // L.polyline(path,{color:"skyblue",weight:2}).addTo(this.map);
-            })
-        }
-
-
         function clickPlayerIconEvent() {
             var playersList = document.querySelectorAll("li");
-            console.log(playersList);
+            // console.log(playersList);
             playersList.forEach(function (event) {
                 event.addEventListener("click", function () {
 
@@ -425,7 +387,6 @@
                         event.setAttribute('data-hp', playerHp);
                     } else {
                         event.setAttribute('data-hp', 0);
-
                         event.style.backgroundColor = 'gray';
                     }
                     updatePlayersHpDisplay();
@@ -458,7 +419,6 @@
                 document.getElementById("countdown").textContent = "00:00";
                 return;
             }
-
             // 计算剩余的分钟和秒数
             var minutes = Math.floor(timeDifference / (1000 * 60));
             var seconds = Math.floor((timeDifference % (1000 * 60)) / 1000);
@@ -480,12 +440,9 @@
                 }
                 else {
                     liList[i].style.backgroundColor = 'gray';
-
                 }
-
             }
             document.querySelector(".blueTeamSurvivors").textContent = survivors;
-            console.log(survivors);
         }
         function CountRedPlayersSurvivorsNumber() {
             var survivors = 0;
@@ -499,7 +456,6 @@
                 }
             }
             document.querySelector(".redTeamSurvivors").textContent = survivors;
-            console.log(survivors);
         }
 
         function ajaxTest() {
@@ -531,7 +487,31 @@
 
         //随机数，测试用
         function randomNum(min, max) {
-            return Math.random() * (max - min) + min;
+            var randomNum = Math.random() * (max - min) + min
+            return randomNum.toFixed(6);
+        }
+
+        //锚点随机运动
+        function markerMove(marker) {
+            var currentLatLng = marker.getLatLng();
+            polyline.addLatLng(currentLatLng);
+            var newLatlngPoint = L.latLng(randomNum(33.464671, 33.664671), randomNum(118.859960, 118.959960));
+            marker.setLatLng(newLatlngPoint);
+            currentLatLng = marker.getLatLng();
+            // 添加当前位置到 Polyline
+            polyline.addLatLng(currentLatLng);
+        }
+
+
+        //显示锚点运动轨迹
+        function markerPathDisplay() {
+
+            markerList[0].on('move', res => { // 监听点位移动事件 move
+                map.panTo([res.latlng.lat, res.latlng.lng]) //回调中会返回经纬度信息，点移动改变地图中心点
+                path.length > 1 && path.shift() // 保持数组长度，避免过度push不断重新绘制之前的路径
+                path.push([res.latlng.lat, res.latlng.lng]) // 将数据push到数组中
+                L.polyline(path, { color: '#20a080', weight: 2 }).addTo(map) // 绘制线到地图图层
+            })
         }
 
     </script>
