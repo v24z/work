@@ -308,11 +308,11 @@
         // 创建 Polyline 图层
         var polyline = L.polyline([], { color: 'skyblue' }).addTo(map);
 
-        var markerList = [];//锚点列表
-        var polylineList=[];    //polyline图层列表
-        var pathList = [];    // 声明绘制线的临时使用变量 [[],[],]
+        var markerList = [];    //  锚点列表
+        var polylineList = [];    //  polyline图层列表
+        var pathList = [];      // 最近两点路径变量  [   [[],[]],    [[],[]],  ]
 
-        var path=[];
+        var path = [];
         window.onload = function () {
             // 每秒钟更新倒计时
             countDownTimer = setInterval(updateCountdown, 1000);
@@ -353,6 +353,7 @@
             var leftUl = document.querySelector(".leftPlayers");
             var liList = leftUl.querySelectorAll("li");
             for (let i = 0; i < liList.length; i++) {
+                var pathTemp = [];
                 var Icon = L.icon({
                     iconUrl: liList[i].querySelector('img').getAttribute('src'),
                     iconSize: [20],
@@ -360,11 +361,14 @@
                 })
                 var latlngPoint = L.latLng(randomNum(33.464671, 33.664671), randomNum(118.859960, 118.959960));
                 var marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);
-                if (i==0) {
-                    var latlng=marker.getLatLng();
-                    path.push([latlng.lat, latlng.lng])
-                    // console.log(latlng.lat, latlng.lng);
-                }
+                // if (i==0) {
+                //     var latlng=marker.getLatLng();
+                //     path.push([latlng.lat, latlng.lng])
+                //     // console.log(latlng.lat, latlng.lng);
+                // }
+                var latlng = marker.getLatLng();
+                pathTemp.push([latlng.lat, latlng.lng]);
+                pathList.push(pathTemp);
                 markerList.push(marker);
 
             }
@@ -503,7 +507,7 @@
 
             var newLatlngPoint = L.latLng(randomNum(33.464671, 33.664671), randomNum(118.859960, 118.959960));
             // path.push([marker.latlng.lat, marker.latlng.lng]) // 将数据push到数组中
-            console.log("新坐标:"+newLatlngPoint);
+            console.log("新坐标:" + newLatlngPoint);
 
             marker.setLatLng(newLatlngPoint);
             // currentLatLng = marker.getLatLng();
@@ -512,7 +516,6 @@
             // console.log("坐标路径"+randomNum(2,3));
             // myPath();
 
-            markerPathDisplay(marker);
 
 
         }
@@ -524,12 +527,12 @@
             markerList[0].on('move', res => { // 监听点位移动事件 move
                 map.panTo([res.latlng.lat, res.latlng.lng]) //回调中会返回经纬度信息，点移动改变地图中心点
                 // console.log("push前："+path);
-                path.length > 1 && path.shift() // 保持数组长度，避免过度push不断重新绘制之前的路径
-                path.push([res.latlng.lat, res.latlng.lng]) // 将数据push到数组中
+                pathList[0].length > 1 && pathList[0].shift() // 保持数组长度，避免过度push不断重新绘制之前的路径
+                pathList[0].push([res.latlng.lat, res.latlng.lng]) // 将数据push到数组中
                 // console.log("push后："+path);
 
-                L.polyline(path, { color: '#20a080', weight: 2 }).addTo(map) // 绘制线到地图图层
-                
+                L.polyline(pathList[0], { color: '#20a080', weight: 2 }).addTo(map) // 绘制线到地图图层
+
             })
         }
 
