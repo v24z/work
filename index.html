@@ -298,30 +298,31 @@
         var defaultMapLevel = 10;              //默认显示地图层级
         var map = L.map('map').setView([centerOfLatitude, centerOfLongitude], defaultMapLevel);      //设置地图
         // var marker = undefined;
-        var markerList = [];//锚点列表
 
         var targetTime = new Date();                        //当前时间
         targetTime.setMinutes(targetTime.getMinutes() + 1); //设置时间
 
-        // loadLeftPlayerPoint();      //加载蓝方
         var countDownTimer = undefined;  //倒计时计时器
         var loadLeftPlayerTimer = undefined;  //加载更新左方队员位置计时器
 
         // 创建 Polyline 图层
-        var polyline = L.polyline([], { color: 'red' }).addTo(map);
+        var polyline = L.polyline([], { color: 'skyblue' }).addTo(map);
 
-        let path = [];    // 声明绘制线的临时使用变量
+        var markerList = [];//锚点列表
+        var polylineList=[];    //polyline图层列表
+        var pathList = [];    // 声明绘制线的临时使用变量 [[],[],]
+
+        var path=[];
         window.onload = function () {
             // 每秒钟更新倒计时
             countDownTimer = setInterval(updateCountdown, 1000);
             updatePlayersHpDisplay();
 
             loadMap();                  //加载地图
-            // loadLeftPlayerTimer=setInterval(loadLeftPlayerPoint, 1000);
-            // loadLeftPlayerPoint();      //加载蓝方
+            loadLeftPlayerPoint();      //加载蓝方
 
-            firstLoadPalyer();//加载到一个li
             setInterval(markerMove, 5000, markerList[0]);
+            markerPathDisplay();
 
 
             CountBluePlayersSurvivorsNumber();  //蓝方幸存人数
@@ -339,7 +340,7 @@
             document.querySelector("#map").style.width = '1519px';
             //利用leaflet显示瓦片地图
             var tileLayer = L.tileLayer('http://localhost:8080/MyMap/newtask/{z}/{x}/{y}.jpg', {
-                minZoom: 5,
+                minZoom: 10,
                 maxZoom: 13,
                 tileSize: 256, // 瓦片尺寸，通常为256像素
                 //zoomOffset: 3, // 瓦片层级的偏移值，用于调整实际层级与显示层级之间的关系
@@ -349,8 +350,8 @@
         };
 
         function loadLeftPlayerPoint() {
-            var leftPlayersList = document.querySelector(".leftPlayers");
-            var liList = leftPlayersList.querySelectorAll("li");
+            var leftUl = document.querySelector(".leftPlayers");
+            var liList = leftUl.querySelectorAll("li");
             for (let i = 0; i < liList.length; i++) {
                 var Icon = L.icon({
                     iconUrl: liList[i].querySelector('img').getAttribute('src'),
@@ -359,22 +360,16 @@
                 })
                 var latlngPoint = L.latLng(randomNum(33.464671, 33.664671), randomNum(118.859960, 118.959960));
                 var marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);
+                if (i==0) {
+                    var latlng=marker.getLatLng();
+                    path.push([latlng.lat, latlng.lng])
+                    // console.log(latlng.lat, latlng.lng);
+                }
                 markerList.push(marker);
+
             }
         }
 
-        function firstLoadPalyer() {
-            var ul = document.querySelector(".leftPlayers");
-            var Icon = L.icon({
-                iconUrl: ul.querySelector("li:nth-child(1) img").getAttribute('src'),
-                iconSize: [20],
-                className: "leftPlayerIcon playersIcon"         //为自定义标记点图标添加类名
-            })
-            var latlngPoint = L.latLng(randomNum(33.464671, 33.664671), randomNum(118.859960, 118.959960));
-            var marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);
-            markerList.push(marker);
-
-        }
         function clickPlayerIconEvent() {
             var playersList = document.querySelectorAll("li");
             // console.log(playersList);
@@ -491,15 +486,35 @@
             return randomNum.toFixed(6);
         }
 
+        function myPath() {
+            var latlngs = polyline.getLatLngs();
+
+            // 遍历并输出路径点
+            // latlngs.forEach(function (latlng) {
+            //     console.log(latlng.lat, latlng.lng);
+            // });
+            console.log(latlngs);
+        }
+
         //锚点随机运动
         function markerMove(marker) {
-            var currentLatLng = marker.getLatLng();
-            polyline.addLatLng(currentLatLng);
+            // var currentLatLng = marker.getLatLng();
+            // polyline.addLatLng(currentLatLng);
+
             var newLatlngPoint = L.latLng(randomNum(33.464671, 33.664671), randomNum(118.859960, 118.959960));
+            // path.push([marker.latlng.lat, marker.latlng.lng]) // 将数据push到数组中
+            console.log("新坐标:"+newLatlngPoint);
+
             marker.setLatLng(newLatlngPoint);
-            currentLatLng = marker.getLatLng();
-            // 添加当前位置到 Polyline
-            polyline.addLatLng(currentLatLng);
+            // currentLatLng = marker.getLatLng();
+            // // 添加当前位置到 Polyline
+            // polyline.addLatLng(currentLatLng);
+            // console.log("坐标路径"+randomNum(2,3));
+            // myPath();
+
+            markerPathDisplay(marker);
+
+
         }
 
 
@@ -508,9 +523,13 @@
 
             markerList[0].on('move', res => { // 监听点位移动事件 move
                 map.panTo([res.latlng.lat, res.latlng.lng]) //回调中会返回经纬度信息，点移动改变地图中心点
+                // console.log("push前："+path);
                 path.length > 1 && path.shift() // 保持数组长度，避免过度push不断重新绘制之前的路径
                 path.push([res.latlng.lat, res.latlng.lng]) // 将数据push到数组中
+                // console.log("push后："+path);
+
                 L.polyline(path, { color: '#20a080', weight: 2 }).addTo(map) // 绘制线到地图图层
+                
             })
         }
 
