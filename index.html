@@ -1,11 +1,579 @@
 <!DOCTYPE html>
-<html lang="en">
+<!-- 修改前，随机位置 -->
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta charset='UTF-8' />
+    <!-- <link href="https://cdn.bootcss.com/Buttons/2.0.0/css/buttons.min.css" rel="stylesheet"> -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
+
+
+    <!-- <link href="https://cdn.bootcss.com/Buttons/2.0.0/css/buttons.min.css" rel="stylesheet"> -->
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            z-index: 1;
+
+        }
+
+
+        .leftTeam {
+            position: absolute;
+            top: 10px;
+            left: 0;
+            z-index: 99;
+        }
+
+        .rightTeam {
+            position: absolute;
+            top: 10px;
+            right: 0;
+            z-index: 99;
+        }
+
+        .leftPlayers {
+            position: absolute;
+            /* margin-top: 300px; */
+            left: 10px;
+            list-style: none;
+        }
+
+        .rightPlayers {
+            position: absolute;
+            right: 10px;
+            list-style: none;
+        }
+
+        .rightPlayers li,
+        .leftPlayers li {
+            position: relative;
+            width: 180px;
+            height: 60px;
+            background-color: skyblue;
+            margin-bottom: 3px;
+        }
+
+        .rightPlayers li {
+            background-color: #ef9393;
+        }
+
+        .rightPlayers li img,
+        .leftPlayers li img {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            left: 3px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .name {
+            position: absolute;
+            left: 50%;
+            top: 30%;
+            background-color: blueviolet;
+        }
+
+        .hpContainer {
+            position: absolute;
+            height: 5px;
+            width: 100%;
+            background-color: white;
+            bottom: 3px;
+            border-radius: 5px;
+        }
+
+        .hpValueDisplay {
+            height: 100%;
+            width: 50%;
+            background-color: rgb(21, 200, 21);
+        }
+
+
+
+        .battleFieldSituationInfo {
+            position: absolute;
+            display: flex;
+            top: 10px;
+            height: 100px;
+            width: 300px;
+            background-color: #3b75b1;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 99;
+            align-items: center;
+        }
+
+        .blueTeam,
+        .redTeam {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 15%;
+        }
+
+        .blueTeam {
+            background-color: skyblue;
+
+        }
+
+        .redTeam {
+            background-color: rgb(216, 45, 45);
+        }
+
+        .scoreAndTime {
+            display: flex;
+            background-color: #cfc8a6;
+            height: 80%;
+            width: 70%;
+        }
+
+        .timeCounter {
+            width: 40%;
+            font-size: 30px;
+            font-weight: 600;
+            text-align: center;
+            line-height: 80px;
+            background-color: #7fafe2;
+
+        }
+
+        .blueTeamSurvivors,
+        .redTeamSurvivors {
+            width: 30%;
+            font-weight: 600;
+            font-size: 50px;
+            background-color: #fff;
+            text-align: center;
+            line-height: 80px;
+        }
+
+        .tool_bar {
+            position: absolute;
+            right: 50px;
+            top: 20px;
+            z-index: 9;
+        }
+
+        .leftPlayerIcon {
+            border-radius: 50%;
+            border: 2px solid blue;
+        }
+
+        .leaflet-control-zoom {
+            display: none;
+        }
+    </style>
+    <title>Gaoded statellite Map</title>
 </head>
+
 <body>
-    sss12
+    <div class="leftTeam">
+        <button id="test">test</button>
+
+        <ul class="leftPlayers">
+            <li data-index="1" data-hp="100">
+                <img src="./icon/icon.jpg" alt="">
+                <div class="name"><a>name</a></div>
+                <div class="hpContainer">
+                    <div class="hpValueDisplay" test="1"></div>
+                </div>
+            </li>
+            <li data-index="2" data-hp="100">
+                <img src="./icon/821.png" alt="">
+                <div class="name"><a>name</a></div>
+                <div class="hpContainer">
+                    <div class="hpValueDisplay"></div>
+                </div>
+            </li>
+            <li data-index="3" data-hp="0">
+                <img src="./icon/818.png" alt="">
+                <div class="name"><a>name</a></div>
+                <div class="hpContainer">
+                    <div class="hpValueDisplay"></div>
+                </div>
+            </li>
+            <li data-index="4" data-hp="100">
+                <img src="./icon/819.png" alt="">
+                <div class="name"><a>name</a></div>
+                <div class="hpContainer">
+                    <div class="hpValueDisplay"></div>
+                </div>
+            </li>
+            <li data-index="5" data-hp="0">
+                <img src="./icon/820.png" alt="">
+                <div class="name"><a>name</a></div>
+                <div class="hpContainer">
+                    <div class="hpValueDisplay"></div>
+                </div>
+            </li>
+
+        </ul>
+    </div>
+
+    <div class="rightTeam">
+        <ul class="rightPlayers">
+            <li data-hp="100">
+                <img src="./icon/822.png" alt="">
+                <div class="name"><a>name</a></div>
+                <div class="hpContainer">
+                    <div class="hpValueDisplay"></div>
+                </div>
+            </li>
+            <li data-hp="100">
+                <img src="./icon/823.png" alt="">
+                <div class="name"><a>name</a></div>
+                <div class="hpContainer">
+                    <div class="hpValueDisplay"></div>
+                </div>
+            </li>
+            <li data-hp="100">
+                <img src="./icon/824.png" alt="">
+                <div class="name"><a>name</a></div>
+                <div class="hpContainer">
+                    <div class="hpValueDisplay"></div>
+                </div>
+            </li>
+            <li data-hp="100">
+                <img src="./icon/825.png" alt="">
+                <div class="name"><a>name</a></div>
+                <div class="hpContainer">
+                    <div class="hpValueDisplay"></div>
+                </div>
+            </li>
+            <li data-hp="100">
+                <img src="./icon/826.png" alt="">
+                <div class="name"><a>name</a></div>
+                <div class="hpContainer">
+                    <div class="hpValueDisplay"></div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="battleFieldSituationInfo">
+
+        <div class="blueTeam">
+            <h3 style="writing-mode: vertical-lr;">蓝方</h3>
+        </div>
+
+        <div class="scoreAndTime">
+            <div class="blueTeamSurvivors">4</div>
+            <p class="timeCounter" id="countdown"></p>
+            <div class="redTeamSurvivors">2</div>
+        </div>
+        <div class="redTeam">
+            <h3 style="writing-mode: vertical-lr;">红方</h3>
+        </div>
+
+    </div>
+
+    <div id='map'></div>
+
+
+    <script src="leaflet.js"></script>
+    <script src="jquery.js"></script>
+
+
+    <script>
+        //var userInput = prompt('Please enter a value:');
+        var centerOfLongitude = 118.923888;  //经度中心点
+        var centerOfLatitude = 33.404774;   //纬度中心点
+        var defaultMapLevel = 10;              //默认显示地图层级
+        var map = L.map('map').setView([centerOfLatitude, centerOfLongitude], defaultMapLevel);      //设置地图
+        // var marker = undefined;
+        var markerList = [];//锚点列表
+
+        var targetTime = new Date();                        //当前时间
+        targetTime.setMinutes(targetTime.getMinutes() + 60); //设置时间
+
+        console.log(33.46467111824269 + 0.03 + randomNum(0.01, 0.09));
+        // loadLeftPlayerPoint();      //加载蓝方
+        var countDownTimer=undefined;  //倒计时计时器
+        var loadLeftPlayerTimer=undefined;  //加载更新左方队员位置计时器
+
+        var path=[];    //路径
+        window.onload = function () {
+            // 每秒钟更新倒计时
+            countDownTimer=setInterval(updateCountdown, 1000);
+            updatePlayersHpDisplay();
+
+            loadMap();                  //加载地图
+            loadLeftPlayerTimer=setInterval(loadLeftPlayerPoint, 1000);
+
+            // loadLeftPlayerPoint();      //加载蓝方
+            //加载红方
+            CountBluePlayersSurvivorsNumber();  //蓝方幸存人数
+            CountRedPlayersSurvivorsNumber();//红方幸存人数
+            ajaxTest();
+            clickPlayerIconEvent();
+
+        };
+
+        function loadMap() {
+            //设置id是map的容器宽高 = 浏览器可视区域宽高
+            // document.querySelector("#map").style.height = document.documentElement.clientHeight + 'px';
+            document.querySelector("#map").style.height = '745px';
+            // document.querySelector("#map").style.width = document.documentElement.clientWidth + 'px';
+            document.querySelector("#map").style.width = '1519px';
+
+
+
+
+
+
+            //利用leaflet显示瓦片地图
+            var tileLayer = L.tileLayer('http://localhost:8080/MyMap/newtask/{z}/{x}/{y}.jpg', {
+                minZoom: 3,
+                maxZoom: 13,
+                tileSize: 256, // 瓦片尺寸，通常为256像素
+                //zoomOffset: 3, // 瓦片层级的偏移值，用于调整实际层级与显示层级之间的关系
+            }).addTo(map);
+
+
+        };
+
+        function loadLeftPlayerPoint() {
+            var leftPlayersList = document.querySelector(".leftPlayers");
+            var liList = leftPlayersList.querySelectorAll("li");
+            // var img = liList[0].querySelectorAll('img');
+
+            if (markerList.length != 5) {
+
+                for (let i = 0; i < liList.length; i++) {
+
+                    // console.log(liList[i].querySelector('img').getAttribute('src'));
+                    var Icon = L.icon({
+                        iconUrl: liList[i].querySelector('img').getAttribute('src'),
+                        iconSize: [20],
+                        className: "leftPlayerIcon playersIcon"         //为自定义标记点图标添加类名
+                    })
+                    var latlngPoint = L.latLng(33.46467111824269 + 0.03 * i + randomNum(0.01, 0.09), 118.95996093750001 + 0.03 * i + randomNum(0.01, 0.09));
+                    var marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);
+                    markerList.push(marker);
+                }
+            }
+            else {
+                // markerList.forEach(function (marker) {
+                //     var newLatlngPoint = L.latLng(33.46467111824269 + randomNum(0.01, 0.09), 118.95996093750001 + randomNum(0.01, 0.09));
+                //     marker.setLatLng(newLatlngPoint);
+                // });
+
+
+
+
+                var newLatlngPoint = L.latLng(33.46467111824269 + randomNum(0.01, 0.09), 118.95996093750001 + randomNum(0.01, 0.09));
+                markerList[0].setLatLng(newLatlngPoint);
+
+                // markerList[0].on("move",function(res){
+                markerList[0].on("move",res=>{
+                    path.push([res.latlng.lat,res.latlng.lng]);
+                    L.polyline(path,{color:"skyblue",weight:2}).addTo(this.map);
+                })
+
+
+            }
+
+
+        }
+
+
+        function clickPlayerIconEvent() {
+            var playersList = document.querySelectorAll("li");
+            console.log(playersList);
+            playersList.forEach(function (event) {
+                event.addEventListener("click", function () {
+
+                    var playerHp = event.getAttribute('data-hp');
+                    if (playerHp - 50 > 0) {
+                        playerHp -= 50;
+                        event.setAttribute('data-hp', playerHp);
+                    } else {
+                        event.setAttribute('data-hp', 0);
+
+                        event.style.backgroundColor = 'gray';
+                    }
+                    updatePlayersHpDisplay();
+                    updatePlayersHpDisplay();
+                    CountBluePlayersSurvivorsNumber();
+                    CountRedPlayersSurvivorsNumber();
+
+                    console.log(event.getAttribute('data-hp'));
+                });
+            });
+        }
+        //更新hp显示
+        function updatePlayersHpDisplay() {
+            var liList = document.querySelectorAll('li');
+
+            for (let i = 0; i < liList.length; i++) {
+                var hpValue = liList[i].getAttribute('data-hp');
+                liList[i].querySelector('.hpValueDisplay').style.width = hpValue + "%";
+
+            }
+        }
+
+        // 更新倒计时
+        function updateCountdown() {
+            var currentTime = new Date();
+            var timeDifference = targetTime.getTime() - currentTime.getTime();
+
+            // 如果倒计时结束，则显示相应的提示信息
+            if (timeDifference <= 0) {
+                clearInterval(countDownTimer);
+                clearInterval(loadLeftPlayerTimer);
+                document.getElementById("countdown").textContent = "00:00";
+                return;
+            }
+
+            // 计算剩余的分钟和秒数
+            var minutes = Math.floor(timeDifference / (1000 * 60));
+            var seconds = Math.floor((timeDifference % (1000 * 60)) / 1000);
+            if (seconds < 10) {
+                seconds = '0' + seconds;
+            }
+            if (minutes < 10) {
+                minutes = '0' + minutes;
+            }
+            // 显示倒计时
+            document.getElementById("countdown").textContent = minutes + ":" + seconds + "";
+        }
+
+        function CountBluePlayersSurvivorsNumber() {
+            var survivors = 0;
+            var liList = document.querySelector(".leftPlayers").querySelectorAll("li")
+            for (let i = 0; i < liList.length; i++) {
+                if (liList[i].getAttribute('data-hp') > 0) {
+                    ++survivors;
+                }
+                else {
+                    liList[i].style.backgroundColor = 'gray';
+
+                }
+
+            }
+            document.querySelector(".blueTeamSurvivors").textContent = survivors;
+            console.log(survivors);
+        }
+        function CountRedPlayersSurvivorsNumber() {
+            var survivors = 0;
+            var liList = document.querySelector(".rightPlayers").querySelectorAll("li")
+            for (let i = 0; i < liList.length; i++) {
+                if (liList[i].getAttribute('data-hp') > 0) {
+                    ++survivors;
+                }
+                else {
+                    liList[i].style.backgroundColor = 'gray';
+                }
+            }
+            document.querySelector(".redTeamSurvivors").textContent = survivors;
+            console.log(survivors);
+        }
+
+        function ajaxTest() {
+            var name = "123";
+            document.querySelector("#test").onclick = function () {
+
+                $.ajax({
+                    url: "/test/hello",
+                    type: "GET",
+                    dataType: "JSON",
+                    data: { name: "fku" },
+                    success: function (response) {
+                        if (response.isSuccess) {
+                            console.log(response);
+                            var jsonValue = JSON.parse(response.Value);
+                            console.log(jsonValue);
+                            console.log(response.isSuccess);
+                            for (let j = 0; j < jsonValue.length; j++) {
+                                console.log(jsonValue[j].name);
+                            }
+                        }
+                        else {
+                            alert("wrong");
+                        }
+                    },
+                })
+            }
+        }
+
+        //随机数，测试用
+        function randomNum(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+
+        
+
+
+
+
+
+
+
+        // function clickMapEvent() {
+        //     var Icon = L.icon({
+        //         iconUrl: "./icon/icon.jpg",
+        //         iconSize: [20],
+        //         className: "playerIcon"         //为自定义标记点图标添加类名
+        //     })
+
+        //     // map.on('click', function (event) {
+        //     //     // 获取点击位置的地理坐标
+        //     //     if (marker == undefined) {
+        //     //         var latlng = event.latlng;
+        //     //         console.log(latlng);
+
+        //     //         marker = L.marker(latlng, { icon: Icon }).addTo(map);
+        //     //     }
+        //     //     // // 将地理坐标转换为瓦片图的行列号
+        //     //     // var tileSize = 256; // 瓦片大小
+        //     //     // var zoom = map.getZoom(); // 当前缩放级别
+        //     //     // var tileCoordinate = map.project(latlng, zoom).divideBy(tileSize).floor();
+
+        //     //     // // 打印瓦片图行列号
+        //     //     // console.log('Clicked tile coordinates:', tileCoordinate);
+        //     // });
+
+        //     //测试直接添加指定位置锚点
+        //     var latlngPoint = L.latLng(33.46467111824269, 118.95996093750001);
+        //     marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);
+        // };
+
+
+
+
+
+
+        // function removeMarkerEvent() {
+        //     document.querySelector('#remove_marker').onclick = function () {
+        //         //将此标注从地图中删除
+        //         marker.remove();
+        //         marker = undefined;
+        //     }
+        // };
+
+
+
+
+
+    </script>
 </body>
+
 </html>
