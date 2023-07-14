@@ -303,7 +303,7 @@
         targetTime.setMinutes(targetTime.getMinutes() + 1); //设置时间
 
         var countDownTimer = undefined;  //倒计时计时器
-        var loadLeftPlayerTimer = undefined;  //加载更新左方队员位置计时器
+        var setRandomLatLngTimer = undefined;  //加载更新左方队员位置计时器
 
         // 创建 Polyline 图层
         var polyline = L.polyline([], { color: 'skyblue' }).addTo(map);
@@ -312,13 +312,13 @@
         var polylineList = [];    //  polyline图层列表
         var pathList = [];      // 最近两点路径变量  [   [[],[]],    [[],[]],  ]
         var colorList = [];
-        var path = [];
-
         window.onload = function () {
             // 每秒钟更新倒计时
             countDownTimer = setInterval(updateCountdown, 1000);
             updatePlayersHpDisplay();
             loadMap();                  //加载地图
+            
+
 
             loadLeftPlayerPoint();      //加载蓝方
             setRandomLatLng(markerList);
@@ -385,7 +385,7 @@
             // 如果倒计时结束，则显示相应的提示信息
             if (timeDifference <= 0) {
                 clearInterval(countDownTimer);
-                clearInterval(loadLeftPlayerTimer);
+                clearInterval(setRandomLatLngTimer);
                 document.getElementById("countdown").textContent = "00:00";
                 return;
             }
@@ -520,7 +520,7 @@
         }
 
         function setRandomLatLng(markerList) {
-            setInterval(function () {
+            setRandomLatLngTimer=setInterval(function () {
                 markerList.forEach(function (res, index) {
                     markerMove(res, index);
                     markerPathDisplay(res, index);
