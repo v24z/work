@@ -311,24 +311,22 @@
         var markerList = [];    //  锚点列表
         var polylineList = [];    //  polyline图层列表
         var pathList = [];      // 最近两点路径变量  [   [[],[]],    [[],[]],  ]
-        var colorList = [];
+        var colorList = [];     //轨迹颜色
+        var leftPlayerInfoJsonList=[];  //信息
+
         window.onload = function () {
             // 每秒钟更新倒计时
             countDownTimer = setInterval(updateCountdown, 1000);
             updatePlayersHpDisplay();
             loadMap();                  //加载地图
-            
-
-
             loadLeftPlayerPoint();      //加载蓝方
             setRandomLatLng(markerList);
-            // markerPathDisplay();
-
             CountBluePlayersSurvivorsNumber();  //蓝方幸存人数
             CountRedPlayersSurvivorsNumber();//红方幸存人数
             ajaxTest();
             clickPlayerIconEvent();
         };
+        
         function loadMap() {
             //设置id是map的容器宽高 = 浏览器可视区域宽高
             // document.querySelector("#map").style.height = document.documentElement.clientHeight + 'px';
@@ -342,21 +340,21 @@
                 tileSize: 256, // 瓦片尺寸，通常为256像素
                 //zoomOffset: 3, // 瓦片层级的偏移值，用于调整实际层级与显示层级之间的关系
             }).addTo(map);
-
-
         };
+
         function clickPlayerIconEvent() {
             var playersList = document.querySelectorAll("li");
             // console.log(playersList);
-            playersList.forEach(function (event) {
+            playersList.forEach(function (event,index) {
                 event.addEventListener("click", function () {
-
                     var playerHp = event.getAttribute('data-hp');
                     if (playerHp - 50 > 0) {
                         playerHp -= 50;
+                        leftPlayerInfoJsonList[index].hp-=50;
                         event.setAttribute('data-hp', playerHp);
                     } else {
                         event.setAttribute('data-hp', 0);
+                        leftPlayerInfoJsonList[index].hp=0;//更新json列表信息
                         event.style.backgroundColor = 'gray';
                     }
                     updatePlayersHpDisplay();
@@ -370,11 +368,9 @@
         //更新hp显示
         function updatePlayersHpDisplay() {
             var liList = document.querySelectorAll('li');
-
             for (let i = 0; i < liList.length; i++) {
                 var hpValue = liList[i].getAttribute('data-hp');
                 liList[i].querySelector('.hpValueDisplay').style.width = hpValue + "%";
-
             }
         }
         // 更新倒计时
@@ -475,15 +471,12 @@
                 var lng = randomNum(118.859960, 118.959960);
                 var latlngPoint = L.latLng(lat, lng);
                 var marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);//标记点
-
-
-
+                var jsonValue={"name": liList[i].getAttribute('data-name'),"hp":parseInt(liList[i].getAttribute('data-hp'))};
+                leftPlayerInfoJsonList.push(jsonValue);//初始化json信息列表
                 pathTemp.push([lat, lng]);
                 pathList.push(pathTemp);
                 markerList.push(marker);
-                // console.log("lat:" + lat + "  " + "lng" + lng);
-                // console.log("pathList:");
-                // console.log(pathList);
+
             }
         }
         //锚点随机运动
@@ -497,12 +490,9 @@
             // console.log("开始更新" + index);
             // console.log("获取列表");
             // console.log(pathTemp);
-
             var newLatlngPoint = L.latLng(lat, lng);
             // console.log(index + "位置新坐标:" + "lat:" + lat + "  " + "lng" + lng);
-
-            marker.setLatLng(newLatlngPoint);
-
+            leftPlayerInfoJsonList[index].hp>0&&marker.setLatLng(newLatlngPoint);
             // console.log("pathList:");
             // console.log(pathList);
         }
@@ -514,9 +504,6 @@
                 L.polyline(pathList[index], { color: colorList[index], weight: 2 }).addTo(map) // 绘制线到地图图层
                 // polylineList[index].addLatLng(pathList[index]);
             })
-
-
-
         }
 
         function setRandomLatLng(markerList) {
@@ -526,26 +513,23 @@
                     markerPathDisplay(res, index);
                 })
             }, 5000)
-
         }
 
         function randomColor() {
             var palette = '0123456789ABCDEF';
             var color = '#';
-
             for (var i = 0; i < 6; i++) {
                 color += palette[Math.floor(Math.random() * 16)];
             }
-
             return color;
         }
+        
         function getColor(num){
             for (let i = 0; i < num; i++) {
                 colorList.push(randomColor());
-                
+
             }
         }
-
 
     </script>
 </body>
