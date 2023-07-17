@@ -321,6 +321,11 @@
             loadMap();                  //加载地图
             loadLeftPlayerPoint();      //加载蓝方
             setRandomLatLng(markerList);
+            markerList.forEach(function(res,index){
+                markerPathDisplay(res, index);
+
+            })
+
             CountBluePlayersSurvivorsNumber();  //蓝方幸存人数
             CountRedPlayersSurvivorsNumber();//红方幸存人数
             ajaxTest();
@@ -510,9 +515,10 @@
             setRandomLatLngTimer=setInterval(function () {
                 markerList.forEach(function (res, index) {
                     markerMove(res, index);
-                    markerPathDisplay(res, index);
+                    // markerPathDisplay(res, index);
                 })
             }, 5000)
+
         }
 
         function randomColor() {
@@ -523,7 +529,6 @@
             }
             return color;
         }
-        
         function getColor(num){
             for (let i = 0; i < num; i++) {
                 colorList.push(randomColor());
