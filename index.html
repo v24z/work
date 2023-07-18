@@ -171,9 +171,14 @@
             z-index: 9;
         }
 
-        .leftPlayerIcon {
+        .leftPlayersIcon {
             border-radius: 50%;
             border: 2px solid blue;
+        }
+
+        .rightPlayersIcon {
+            border-radius: 50%;
+            border: 2px solid rgb(225, 44, 59);
         }
 
         .leaflet-control-zoom {
@@ -236,7 +241,7 @@
                     <div class="hpValueDisplay"></div>
                 </div>
             </li>
-            <li data-hp="0">
+            <li data-hp="100">
                 <img src="./icon/823.png" alt="">
                 <div class="name"><a>name</a></div>
                 <div class="hpContainer">
@@ -257,7 +262,7 @@
                     <div class="hpValueDisplay"></div>
                 </div>
             </li>
-            <li data-hp="0">
+            <li data-hp="100">
                 <img src="./icon/826.png" alt="">
                 <div class="name"><a>name</a></div>
                 <div class="hpContainer">
@@ -289,16 +294,11 @@
 
     <script src="leaflet.js"></script>
     <script src="jquery.js"></script>
-
-
     <script>
-        //var userInput = prompt('Please enter a value:');
         var centerOfLongitude = 118.923888;  //经度中心点
         var centerOfLatitude = 33.404774;   //纬度中心点
         var defaultMapLevel = 10;              //默认显示地图层级
         var map = L.map('map').setView([centerOfLatitude, centerOfLongitude], defaultMapLevel);      //设置地图
-        // var marker = undefined;
-
         var targetTime = new Date();                        //当前时间
         targetTime.setMinutes(targetTime.getMinutes() + 1); //设置时间
 
@@ -307,31 +307,37 @@
 
         // 创建 Polyline 图层
         var polyline = L.polyline([], { color: 'skyblue' }).addTo(map);
-
-        var markerList = [];    //  锚点列表
-        var polylineList = [];    //  polyline图层列表
-        var pathList = [];      // 最近两点路径变量  [   [[],[]],    [[],[]],  ]
+        var jsonMarkerList = { "leftTeam": [], "rightTeam": [] }
+        var jsonPathList = { "leftTeam": [], "rightTeam": [] }
         var colorList = [];     //轨迹颜色
-        var leftPlayerInfoJsonList=[];  //信息
+        var leftPlayerInfoJsonList = [];  //信息
+        var rightPlayerInfoJsonList = []
 
         window.onload = function () {
             // 每秒钟更新倒计时
             countDownTimer = setInterval(updateCountdown, 1000);
             updatePlayersHpDisplay();
             loadMap();                  //加载地图
-            loadLeftPlayerPoint();      //加载蓝方
-            setRandomLatLng(markerList);    //随机位置加载
-            markerList.forEach(function(res,index){
+            loadPlayerPoint(".leftPlayers");      //加载蓝方
+            loadPlayerPoint(".rightPlayers");      //加载蓝方
+            setRandomLatLng(jsonMarkerList.leftTeam);    //随机位置加载
+            jsonMarkerList.leftTeam.forEach(function (res, index) {
                 markerPathDisplay(res, index);
-
             })
 
-            CountPlayersSurvivorsNumber(".leftPlayers",".blueTeamSurvivors");  //蓝方幸存人数
-            CountPlayersSurvivorsNumber(".rightPlayers",".redTeamSurvivors");//红方幸存人数
+            rightTeamSetRandomLatLng(jsonMarkerList.rightTeam);
+            jsonMarkerList.rightTeam.forEach(function (res, index) {
+                rightTeamMarkerPathDisplay(res, index);
+            })
+
+
+            CountPlayersSurvivorsNumber(".leftPlayers", ".blueTeamSurvivors");  //蓝方幸存人数
+            CountPlayersSurvivorsNumber(".rightPlayers", ".redTeamSurvivors");//红方幸存人数
             ajaxTest();
-            clickPlayerIconEvent();
+            clickPlayerIconEvent(".leftPlayers");
+            clickPlayerIconEvent(".rightPlayers");
         };
-        
+
         function loadMap() {
             //设置id是map的容器宽高 = 浏览器可视区域宽高
             // document.querySelector("#map").style.height = document.documentElement.clientHeight + 'px';
@@ -347,25 +353,39 @@
             }).addTo(map);
         };
 
-        function clickPlayerIconEvent() {
-            
-            var playersList = document.querySelectorAll("li");
-            console.log(playersList);
-            playersList.forEach(function (event,index) {
+        function clickPlayerIconEvent(classNameOrID) {
+            var playersList = document.querySelector(classNameOrID).querySelectorAll("li");
+            // console.log(playersList);
+
+            playersList.forEach(function (event, index) {
                 event.addEventListener("click", function () {
-                    var playerHp = event.getAttribute('data-hp');
-                    if (playerHp - 50 > 0) {
-                        playerHp -= 50;
-                        leftPlayerInfoJsonList[index].hp-=50;
-                        event.setAttribute('data-hp', playerHp);
+                    if (classNameOrID.includes("left")) {
+                        var playerHp = event.getAttribute('data-hp');
+                        if (playerHp - 50 > 0) {
+                            playerHp -= 50;
+                            leftPlayerInfoJsonList[index].hp -= 50;
+                            event.setAttribute('data-hp', playerHp);
+                        } else {
+                            event.setAttribute('data-hp', 0);
+                            leftPlayerInfoJsonList[index].hp = 0;//更新json列表信息
+                            event.style.backgroundColor = 'gray';
+                        }
                     } else {
-                        event.setAttribute('data-hp', 0);
-                        leftPlayerInfoJsonList[index].hp=0;//更新json列表信息
-                        event.style.backgroundColor = 'gray';
+                        var playerHp = event.getAttribute('data-hp');
+                        if (playerHp - 50 > 0) {
+                            playerHp -= 50;
+                            rightPlayerInfoJsonList[index].hp -= 50;
+                            event.setAttribute('data-hp', playerHp);
+                        } else {
+                            event.setAttribute('data-hp', 0);
+                            rightPlayerInfoJsonList[index].hp = 0;//更新json列表信息
+                            event.style.backgroundColor = 'gray';
+                        }
                     }
+
                     updatePlayersHpDisplay();
-                    CountPlayersSurvivorsNumber(".leftPlayers",".blueTeamSurvivors");
-                    CountPlayersSurvivorsNumber(".rightPlayers",".redTeamSurvivors");
+                    CountPlayersSurvivorsNumber(".leftPlayers", ".blueTeamSurvivors");
+                    CountPlayersSurvivorsNumber(".rightPlayers", ".redTeamSurvivors");
                     console.log(event.getAttribute('data-hp'));
                 });
             });
@@ -403,7 +423,7 @@
             document.getElementById("countdown").textContent = minutes + ":" + seconds + "";
         }
 
-        function CountPlayersSurvivorsNumber(classNameOrID,placeWhereChanged) {
+        function CountPlayersSurvivorsNumber(classNameOrID, placeWhereChanged) {
             var survivors = 0;
             var liList = document.querySelector(classNameOrID).querySelectorAll("li")
             for (let i = 0; i < liList.length; i++) {
@@ -416,8 +436,6 @@
             }
             document.querySelector(placeWhereChanged).textContent = survivors;
         }
-
-
 
         function ajaxTest() {
             var name = "123";
@@ -445,71 +463,10 @@
                 })
             }
         }
-
         //随机数，测试用
         function randomNum(min, max) {
             var randomNum = Math.random() * (max - min) + min
             return parseFloat(randomNum.toFixed(6));
-        }
-
-        function loadLeftPlayerPoint() {
-            var leftUl = document.querySelector(".leftPlayers");
-            var liList = leftUl.querySelectorAll("li");
-            getColor(liList.length);
-            for (let i = 0; i < liList.length; i++) {
-                var pathTemp = [];
-                var Icon = L.icon({
-                    iconUrl: liList[i].querySelector('img').getAttribute('src'),
-                    iconSize: [20],
-                    className: "leftPlayerIcon playersIcon"         //为自定义标记点图标添加类名
-                })
-                var lat = randomNum(33.464671, 33.664671);
-                var lng = randomNum(118.859960, 118.959960);
-                var latlngPoint = L.latLng(lat, lng);
-                var marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);//标记点
-                var jsonValue={"name": liList[i].getAttribute('data-name'),"hp":parseInt(liList[i].getAttribute('data-hp'))};
-                leftPlayerInfoJsonList.push(jsonValue);//初始化json信息列表
-                pathTemp.push([lat, lng]);
-                pathList.push(pathTemp);
-                markerList.push(marker);
-
-            }
-        }
-        //锚点随机运动
-        function markerMove(marker, index = 0) {
-            var lat = randomNum(33.464671, 33.664671);
-            var lng = randomNum(118.859960, 118.959960);
-            pathList[index].length > 1 && pathList[index].shift() // 保持数组长度，避免过度push不断重新绘制之前的路径
-            var pathTemp = pathList[index];
-            pathTemp.push([lat, lng]);
-            pathList[index] = pathTemp;
-            // console.log("开始更新" + index);
-            // console.log("获取列表");
-            // console.log(pathTemp);
-            var newLatlngPoint = L.latLng(lat, lng);
-            // console.log(index + "位置新坐标:" + "lat:" + lat + "  " + "lng" + lng);
-            leftPlayerInfoJsonList[index].hp>0&&marker.setLatLng(newLatlngPoint);
-            // console.log("pathList:");
-            // console.log(pathList);
-        }
-        //显示锚点运动轨迹
-        function markerPathDisplay(marker, index) {
-
-            marker.on('move', function (marker) { // 监听点位移动事件 move
-                // pathList[0].push([res.latlng.lat, res.latlng.lng]) // 将数据push到数组中
-                L.polyline(pathList[index], { color: colorList[index], weight: 2 }).addTo(map) // 绘制线到地图图层
-                // polylineList[index].addLatLng(pathList[index]);
-            })
-        }
-
-        function setRandomLatLng(markerList) {
-            setRandomLatLngTimer=setInterval(function () {
-                markerList.forEach(function (res, index) {
-                    markerMove(res, index);
-                    // markerPathDisplay(res, index);
-                })
-            }, 5000)
-
         }
 
         function randomColor() {
@@ -520,13 +477,112 @@
             }
             return color;
         }
-        
-        function getColor(num){
+
+        function getColor(num) {
             for (let i = 0; i < num; i++) {
                 colorList.push(randomColor());
-
             }
         }
+
+        function loadPlayerPoint(classNameOrID) {
+            var Ul = document.querySelector(classNameOrID);
+            var liList = Ul.querySelectorAll("li");
+            getColor(liList.length);
+            if (classNameOrID.includes("left")) {
+                for (let i = 0; i < liList.length; i++) {
+                    var pathTemp = [];
+                    var Icon = L.icon({
+                        iconUrl: liList[i].querySelector('img').getAttribute('src'),
+                        iconSize: [20],
+                        className: classNameOrID.substring(1) + "Icon playersIcon"         //为自定义标记点图标添加类名
+                    })
+                    var lat = randomNum(33.464671, 33.664671);
+                    var lng = randomNum(118.859960, 118.959960);
+                    var latlngPoint = L.latLng(lat, lng);
+                    var marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);//标记点
+                    var jsonValue = { "name": liList[i].getAttribute('data-name'), "hp": parseInt(liList[i].getAttribute('data-hp')) };
+                    leftPlayerInfoJsonList.push(jsonValue);//初始化json信息列表
+                    pathTemp.push([lat, lng]);
+                    jsonPathList.leftTeam.push(pathTemp);
+                    jsonMarkerList.leftTeam.push(marker);
+                }
+            } else {
+                for (let i = 0; i < liList.length; i++) {
+                    var pathTemp = [];
+                    var Icon = L.icon({
+                        iconUrl: liList[i].querySelector('img').getAttribute('src'),
+                        iconSize: [20],
+                        className: classNameOrID.substring(1) + "Icon playersIcon"         //为自定义标记点图标添加类名
+                    })
+                    var lat = randomNum(33.464671, 33.664671);
+                    var lng = randomNum(118.859960, 118.959960);
+                    var latlngPoint = L.latLng(lat, lng);
+                    var marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);//标记点
+                    var jsonValue = { "name": liList[i].getAttribute('data-name'), "hp": parseInt(liList[i].getAttribute('data-hp')) };
+                    rightPlayerInfoJsonList.push(jsonValue);//初始化json信息列表
+                    pathTemp.push([lat, lng]);
+                    jsonPathList.rightTeam.push(pathTemp);
+                    jsonMarkerList.rightTeam.push(marker);
+                }
+            }
+
+        }
+        //显示左锚点运动轨迹
+        function markerPathDisplay(marker, index) {
+            marker.on('move', function (marker) { // 监听点位移动事件 move
+                L.polyline(jsonPathList.leftTeam[index], { color: colorList[index], weight: 2 }).addTo(map) // 绘制线到地图图层
+            })
+        }
+
+        function setRandomLatLng(markerList) {
+            setRandomLatLngTimer = setInterval(function () {
+                markerList.forEach(function (res, index) {
+                    markerMove(res, index);
+                    // markerPathDisplay(res, index); //路径绘制函数放这里将抛弃初始点，只绘制更新的点
+                })
+            }, 5000)
+
+        }
+        //锚点随机运动
+        function markerMove(marker, index = 0) {
+            var lat = randomNum(33.464671, 33.664671);
+            var lng = randomNum(118.859960, 118.959960);
+            jsonPathList.leftTeam[index].length > 1 && jsonPathList.leftTeam[index].shift() // 保持数组长度，避免过度push不断重新绘制之前的路径
+            var pathTemp = jsonPathList.leftTeam[index];
+            pathTemp.push([lat, lng]);
+            jsonPathList.leftTeam[index] = pathTemp;
+            var newLatlngPoint = L.latLng(lat, lng);
+            leftPlayerInfoJsonList[index].hp > 0 && marker.setLatLng(newLatlngPoint);
+        }
+        //显示右锚点运动轨迹
+        function rightTeamMarkerPathDisplay(marker, index) {
+            marker.on('move', function (marker) { // 监听点位移动事件 move
+                L.polyline(jsonPathList.rightTeam[index], { color: colorList[index], weight: 2 }).addTo(map) // 绘制线到地图图层
+            })
+        }
+
+        function rightTeamSetRandomLatLng(markerList) {
+            setRandomLatLngTimer = setInterval(function () {
+                markerList.forEach(function (res, index) {
+                    rightMarkerMove(res, index);
+                    // rightTeamMarkerPathDisplay(res, index); //路径绘制函数放这里将抛弃初始点，只绘制更新的点
+                })
+            }, 5000)
+
+        }
+        //右队锚点随机运动
+        function rightMarkerMove(marker, index = 0) {
+            var lat = randomNum(33.464671, 33.664671);
+            var lng = randomNum(118.859960, 118.959960);
+            jsonPathList.rightTeam[index].length > 1 && jsonPathList.rightTeam[index].shift() // 保持数组长度，避免过度push不断重新绘制之前的路径
+            var pathTemp = jsonPathList.rightTeam[index];
+            pathTemp.push([lat, lng]);
+            jsonPathList.rightTeam[index] = pathTemp;
+            var newLatlngPoint = L.latLng(lat, lng);
+            rightPlayerInfoJsonList[index].hp > 0 && marker.setLatLng(newLatlngPoint);
+        }
+
+
 
     </script>
 </body>
