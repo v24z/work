@@ -185,7 +185,7 @@
 
 <body>
     <div class="leftTeam">
-        <button id="test">test</button>
+        <button id="ajaxTest">test</button>
 
         <ul class="leftPlayers">
             <li data-index="1" data-hp="100">
@@ -236,7 +236,7 @@
                     <div class="hpValueDisplay"></div>
                 </div>
             </li>
-            <li data-hp="100">
+            <li data-hp="0">
                 <img src="./icon/823.png" alt="">
                 <div class="name"><a>name</a></div>
                 <div class="hpContainer">
@@ -257,7 +257,7 @@
                     <div class="hpValueDisplay"></div>
                 </div>
             </li>
-            <li data-hp="100">
+            <li data-hp="0">
                 <img src="./icon/826.png" alt="">
                 <div class="name"><a>name</a></div>
                 <div class="hpContainer">
@@ -320,14 +320,14 @@
             updatePlayersHpDisplay();
             loadMap();                  //加载地图
             loadLeftPlayerPoint();      //加载蓝方
-            setRandomLatLng(markerList);
+            setRandomLatLng(markerList);    //随机位置加载
             markerList.forEach(function(res,index){
                 markerPathDisplay(res, index);
 
             })
 
-            CountBluePlayersSurvivorsNumber();  //蓝方幸存人数
-            CountRedPlayersSurvivorsNumber();//红方幸存人数
+            CountPlayersSurvivorsNumber(".leftPlayers",".blueTeamSurvivors");  //蓝方幸存人数
+            CountPlayersSurvivorsNumber(".rightPlayers",".redTeamSurvivors");//红方幸存人数
             ajaxTest();
             clickPlayerIconEvent();
         };
@@ -348,8 +348,9 @@
         };
 
         function clickPlayerIconEvent() {
+            
             var playersList = document.querySelectorAll("li");
-            // console.log(playersList);
+            console.log(playersList);
             playersList.forEach(function (event,index) {
                 event.addEventListener("click", function () {
                     var playerHp = event.getAttribute('data-hp');
@@ -363,9 +364,8 @@
                         event.style.backgroundColor = 'gray';
                     }
                     updatePlayersHpDisplay();
-                    updatePlayersHpDisplay();
-                    CountBluePlayersSurvivorsNumber();
-                    CountRedPlayersSurvivorsNumber();
+                    CountPlayersSurvivorsNumber(".leftPlayers",".blueTeamSurvivors");
+                    CountPlayersSurvivorsNumber(".rightPlayers",".redTeamSurvivors");
                     console.log(event.getAttribute('data-hp'));
                 });
             });
@@ -402,9 +402,10 @@
             // 显示倒计时
             document.getElementById("countdown").textContent = minutes + ":" + seconds + "";
         }
-        function CountBluePlayersSurvivorsNumber() {
+
+        function CountPlayersSurvivorsNumber(classNameOrID,placeWhereChanged) {
             var survivors = 0;
-            var liList = document.querySelector(".leftPlayers").querySelectorAll("li")
+            var liList = document.querySelector(classNameOrID).querySelectorAll("li")
             for (let i = 0; i < liList.length; i++) {
                 if (liList[i].getAttribute('data-hp') > 0) {
                     ++survivors;
@@ -413,24 +414,14 @@
                     liList[i].style.backgroundColor = 'gray';
                 }
             }
-            document.querySelector(".blueTeamSurvivors").textContent = survivors;
+            document.querySelector(placeWhereChanged).textContent = survivors;
         }
-        function CountRedPlayersSurvivorsNumber() {
-            var survivors = 0;
-            var liList = document.querySelector(".rightPlayers").querySelectorAll("li")
-            for (let i = 0; i < liList.length; i++) {
-                if (liList[i].getAttribute('data-hp') > 0) {
-                    ++survivors;
-                }
-                else {
-                    liList[i].style.backgroundColor = 'gray';
-                }
-            }
-            document.querySelector(".redTeamSurvivors").textContent = survivors;
-        }
+
+
+
         function ajaxTest() {
             var name = "123";
-            document.querySelector("#test").onclick = function () {
+            document.querySelector("#ajaxTest").onclick = function () {
 
                 $.ajax({
                     url: "/test/hello",
@@ -529,6 +520,7 @@
             }
             return color;
         }
+        
         function getColor(num){
             for (let i = 0; i < num; i++) {
                 colorList.push(randomColor());
