@@ -62,7 +62,7 @@
             position: relative;
             width: 180px;
             height: 60px;
-            background-color: skyblue;
+            background-color: #86ceea;
             margin-bottom: 3px;
         }
 
@@ -294,6 +294,9 @@
 
     <script src="leaflet.js"></script>
     <script src="jquery.js"></script>
+    <script src="paho-mqtt.js"></script>
+    <script src="mymqtt.js"></script>
+
     <script>
         var centerOfLongitude = 118.923888;  //经度中心点
         var centerOfLatitude = 33.404774;   //纬度中心点
@@ -321,7 +324,7 @@
             loadMap();                  //加载地图
             loadPlayerPoint(".leftPlayers");      //加载蓝方
             loadPlayerPoint(".rightPlayers");      //加载蓝方
-            setRandomLatLng(jsonMarkerList.leftTeam);    //随机位置加载
+            leftTeamSetRandomLatLng(jsonMarkerList.leftTeam);    //随机位置加载
             jsonMarkerList.leftTeam.forEach(function (res, index) {
                 markerPathDisplay(res, index);
             })
@@ -335,8 +338,10 @@
             CountPlayersSurvivorsNumber(".leftPlayers", ".blueTeamSurvivors");  //蓝方幸存人数
             CountPlayersSurvivorsNumber(".rightPlayers", ".redTeamSurvivors");//红方幸存人数
             ajaxTest();
-            clickPlayerIconEvent(".leftPlayers");
-            clickPlayerIconEvent(".rightPlayers");
+            mouseEnterPlayerIconEvent(".leftPlayers");//点击减少50hp
+            mouseEnterPlayerIconEvent(".rightPlayers");
+            playersIconDoubleClickEvent(".leftPlayers");
+            playersIconDoubleClickEvent(".rightPlayers");
         };
 
         function loadMap() {
@@ -354,12 +359,12 @@
             }).addTo(map);
         };
 
-        function clickPlayerIconEvent(classNameOrID) {
+        function mouseEnterPlayerIconEvent(classNameOrID) {
             var playersList = document.querySelector(classNameOrID).querySelectorAll("li");
             // console.log(playersList);
 
             playersList.forEach(function (event, index) {
-                event.addEventListener("click", function () {
+                event.addEventListener("mouseenter", function () {
                     if (classNameOrID.includes("left")) {
                         var playerHp = event.getAttribute('data-hp');
                         if (playerHp - 50 > 0) {
@@ -536,7 +541,7 @@
             })
         }
 
-        function setRandomLatLng(markerList) {
+        function leftTeamSetRandomLatLng(markerList) {
             setLeftTeamRandomLatLngTimer = setInterval(function () {
                 markerList.forEach(function (res, index) {
                     markerMove(res, index);
@@ -549,12 +554,14 @@
         function markerMove(marker, index = 0) {
             var lat = randomNum(33.464671, 33.664671);
             var lng = randomNum(118.859960, 118.959960);
-            jsonPathList.leftTeam[index].length > 1 && jsonPathList.leftTeam[index].shift() // 保持数组长度，避免过度push不断重新绘制之前的路径
-            var pathTemp = jsonPathList.leftTeam[index];
-            pathTemp.push([lat, lng]);
-            jsonPathList.leftTeam[index] = pathTemp;
-            var newLatlngPoint = L.latLng(lat, lng);
-            leftPlayerInfoJsonList[index].hp > 0 && marker.setLatLng(newLatlngPoint);
+            if (leftPlayerInfoJsonList[index].hp > 0) {
+                jsonPathList.leftTeam[index].length > 1 && jsonPathList.leftTeam[index].shift() // 保持数组长度，避免过度push不断重新绘制之前的路径
+                var pathTemp = jsonPathList.leftTeam[index];
+                pathTemp.push([lat, lng]);
+                jsonPathList.leftTeam[index] = pathTemp;
+                var newLatlngPoint = L.latLng(lat, lng);
+                leftPlayerInfoJsonList[index].hp > 0 && marker.setLatLng(newLatlngPoint);
+            }
         }
         //显示右锚点运动轨迹
         function rightTeamMarkerPathDisplay(marker, index) {
@@ -576,15 +583,39 @@
         function rightMarkerMove(marker, index = 0) {
             var lat = randomNum(33.464671, 33.664671);
             var lng = randomNum(118.859960, 118.959960);
-            jsonPathList.rightTeam[index].length > 1 && jsonPathList.rightTeam[index].shift() // 保持数组长度，避免过度push不断重新绘制之前的路径
-            var pathTemp = jsonPathList.rightTeam[index];
-            pathTemp.push([lat, lng]);
-            jsonPathList.rightTeam[index] = pathTemp;
-            var newLatlngPoint = L.latLng(lat, lng);
-            rightPlayerInfoJsonList[index].hp > 0 && marker.setLatLng(newLatlngPoint);
+            if (rightPlayerInfoJsonList[index].hp > 0) {
+                jsonPathList.rightTeam[index].length > 1 && jsonPathList.rightTeam[index].shift() // 保持数组长度，避免过度push不断重新绘制之前的路径
+                var pathTemp = jsonPathList.rightTeam[index];
+                pathTemp.push([lat, lng]);
+                jsonPathList.rightTeam[index] = pathTemp;
+                var newLatlngPoint = L.latLng(lat, lng);
+                rightPlayerInfoJsonList[index].hp > 0 && marker.setLatLng(newLatlngPoint);
+            }
         }
 
+        //双击头像恢复HP
+        function playersIconDoubleClickEvent(team) {
+            var liList = document.querySelector(team).querySelectorAll("li");
+            liList.forEach(function (res, index) {
+                res.querySelector("img").addEventListener("dblclick", function () {
+                    res.setAttribute("data-hp", 100);
 
+                    if (res.parentNode.getAttribute("class").includes("left")) {
+                        res.style.backgroundColor = "#86ceea";
+                        leftPlayerInfoJsonList[index].hp = 100;
+                    }
+                    else {
+                        res.style.backgroundColor = "#ef9393";
+                        rightPlayerInfoJsonList[index].hp = 100;
+
+                    }
+                    updatePlayersHpDisplay();
+                    CountPlayersSurvivorsNumber(".leftPlayers", ".blueTeamSurvivors");
+                    CountPlayersSurvivorsNumber(".rightPlayers", ".redTeamSurvivors");
+
+                })
+            })
+        }
 
     </script>
 </body>
