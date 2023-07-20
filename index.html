@@ -185,112 +185,6 @@
             display: none;
         }
     </style>
-    <title>Gaoded statellite Map</title>
-</head>
-
-<body>
-    <div class="leftTeam">
-        <button id="ajaxTest">test</button>
-
-        <ul class="leftPlayers">
-            <li data-index="1" data-hp="100">
-                <img src="./icon/icon.jpg" alt="">
-                <div class="name"><a>name</a></div>
-                <div class="hpContainer">
-                    <div class="hpValueDisplay" test="1"></div>
-                </div>
-            </li>
-            <li data-index="2" data-hp="100">
-                <img src="./icon/821.png" alt="">
-                <div class="name"><a>name</a></div>
-                <div class="hpContainer">
-                    <div class="hpValueDisplay"></div>
-                </div>
-            </li>
-            <li data-index="3" data-hp="0">
-                <img src="./icon/818.png" alt="">
-                <div class="name"><a>name</a></div>
-                <div class="hpContainer">
-                    <div class="hpValueDisplay"></div>
-                </div>
-            </li>
-            <li data-index="4" data-hp="100">
-                <img src="./icon/819.png" alt="">
-                <div class="name"><a>name</a></div>
-                <div class="hpContainer">
-                    <div class="hpValueDisplay"></div>
-                </div>
-            </li>
-            <li data-index="5" data-hp="0">
-                <img src="./icon/820.png" alt="">
-                <div class="name"><a>name</a></div>
-                <div class="hpContainer">
-                    <div class="hpValueDisplay"></div>
-                </div>
-            </li>
-
-        </ul>
-    </div>
-
-    <div class="rightTeam">
-        <ul class="rightPlayers">
-            <li data-hp="100">
-                <img src="./icon/822.png" alt="">
-                <div class="name"><a>name</a></div>
-                <div class="hpContainer">
-                    <div class="hpValueDisplay"></div>
-                </div>
-            </li>
-            <li data-hp="100">
-                <img src="./icon/823.png" alt="">
-                <div class="name"><a>name</a></div>
-                <div class="hpContainer">
-                    <div class="hpValueDisplay"></div>
-                </div>
-            </li>
-            <li data-hp="100">
-                <img src="./icon/824.png" alt="">
-                <div class="name"><a>name</a></div>
-                <div class="hpContainer">
-                    <div class="hpValueDisplay"></div>
-                </div>
-            </li>
-            <li data-hp="100">
-                <img src="./icon/825.png" alt="">
-                <div class="name"><a>name</a></div>
-                <div class="hpContainer">
-                    <div class="hpValueDisplay"></div>
-                </div>
-            </li>
-            <li data-hp="100">
-                <img src="./icon/826.png" alt="">
-                <div class="name"><a>name</a></div>
-                <div class="hpContainer">
-                    <div class="hpValueDisplay"></div>
-                </div>
-            </li>
-        </ul>
-    </div>
-
-    <div class="battleFieldSituationInfo">
-
-        <div class="blueTeam">
-            <h3 style="writing-mode: vertical-lr;">蓝方</h3>
-        </div>
-
-        <div class="scoreAndTime">
-            <div class="blueTeamSurvivors">4</div>
-            <p class="timeCounter" id="countdown"></p>
-            <div class="redTeamSurvivors">2</div>
-        </div>
-        <div class="redTeam">
-            <h3 style="writing-mode: vertical-lr;">红方</h3>
-        </div>
-
-    </div>
-
-    <div id='map'></div>
-
 
     <script src="leaflet.js"></script>
     <script src="jquery.js"></script>
@@ -298,26 +192,27 @@
     <script src="mymqtt.js"></script>
 
     <script>
-        var centerOfLongitude = 118.923888;  //经度中心点
-        var centerOfLatitude = 33.404774;   //纬度中心点
-        var defaultMapLevel = 10;              //默认显示地图层级
-        var map = L.map('map').setView([centerOfLatitude, centerOfLongitude], defaultMapLevel);      //设置地图
-        var targetTime = new Date();                        //当前时间
-        targetTime.setMinutes(targetTime.getMinutes() + 1); //设置时间
-
-        var countDownTimer = undefined;  //倒计时计时器
-        var setLeftTeamRandomLatLngTimer = undefined;  //加载更新左方队员位置计时器
-        var setRightTeamRandomLatLngTimer = undefined;  //加载更新左方队员位置计时器
-
-        // 创建 Polyline 图层
-        var polyline = L.polyline([], { color: 'skyblue' }).addTo(map);
-        var jsonMarkerList = { "leftTeam": [], "rightTeam": [] }
-        var jsonPathList = { "leftTeam": [], "rightTeam": [] }
-        var colorList = [];     //轨迹颜色
-        var leftPlayerInfoJsonList = [];  //信息
-        var rightPlayerInfoJsonList = []
 
         window.onload = function () {
+            createInnerHTML(4);
+            centerOfLongitude = 118.923888;  //经度中心点
+            centerOfLatitude = 33.404774;   //纬度中心点
+            defaultMapLevel = 10;              //默认显示地图层级
+            map = L.map('map').setView([centerOfLatitude, centerOfLongitude], defaultMapLevel);      //设置地图
+            targetTime = new Date();                        //当前时间
+            targetTime.setMinutes(targetTime.getMinutes() + 1); //设置时间
+
+            countDownTimer = undefined;  //倒计时计时器
+            setLeftTeamRandomLatLngTimer = undefined;  //加载更新左方队员位置计时器
+            setRightTeamRandomLatLngTimer = undefined;  //加载更新左方队员位置计时器
+
+            // 创建 Polyline 图层
+            polyline = L.polyline([], { color: 'skyblue' }).addTo(map);
+            jsonMarkerList = { "leftTeam": [], "rightTeam": [] }
+            jsonPathList = { "leftTeam": [], "rightTeam": [] }
+            colorList = [];     //轨迹颜色
+            leftPlayerInfoJsonList = [];  //信息
+            rightPlayerInfoJsonList = []
             // 每秒钟更新倒计时
             countDownTimer = setInterval(updateCountdown, 1000);
             updatePlayersHpDisplay();
@@ -342,7 +237,39 @@
             mouseEnterPlayerIconEvent(".rightPlayers");
             playersIconDoubleClickEvent(".leftPlayers");
             playersIconDoubleClickEvent(".rightPlayers");
-        };
+        }
+
+        function createInnerHTML(leaftPlayersNum = 5, rightPlayersNum = 5) {
+
+
+            var leftStr = "";
+            var rightStr = "";
+            for (var i = 0; i < leaftPlayersNum; i++) {
+                leftStr += '<li data-hp="100">';
+                leftStr += '    <img src="./icon/' + (i + 1) + '.jpg">';
+                leftStr += '    <div class="name">';
+                leftStr += '        <a>' + ("name" + parseInt(i + 1)) + '</a>';
+                leftStr += '    </div>';
+                leftStr += '    <div class="hpContainer">';
+                leftStr += '        <div class="hpValueDisplay"></div>';
+                leftStr += '    </div>';
+                leftStr += '</li>';
+            }
+            document.querySelector(".leftPlayers").innerHTML = leftStr;
+            for (var j = 0; j < rightPlayersNum; j++) {
+                rightStr += '<li data-hp="100">';
+                rightStr += '    <img src="./icon/' + (j + 1 + leaftPlayersNum) + '.jpg">';
+                rightStr += '    <div class="name">';
+                rightStr += '        <a>' + ("name" + parseInt(j + 1)) + '</a>';
+                rightStr += '    </div>';
+                rightStr += '    <div class="hpContainer">';
+                rightStr += '        <div class="hpValueDisplay"></div>';
+                rightStr += '    </div>';
+                rightStr += '</li>';
+            }
+            document.querySelector(".rightPlayers").innerHTML = rightStr;
+
+        }
 
         function loadMap() {
             //设置id是map的容器宽高 = 浏览器可视区域宽高
@@ -415,6 +342,8 @@
                 clearInterval(setLeftTeamRandomLatLngTimer);
                 clearInterval(setRightTeamRandomLatLngTimer);
                 document.getElementById("countdown").textContent = "00:00";
+                console.log('jsonPathList');
+                console.log(jsonPathList);
                 return;
             }
             // 计算剩余的分钟和秒数
@@ -542,6 +471,7 @@
         }
 
         function leftTeamSetRandomLatLng(markerList) {
+
             setLeftTeamRandomLatLngTimer = setInterval(function () {
                 markerList.forEach(function (res, index) {
                     markerMove(res, index);
@@ -550,7 +480,7 @@
             }, 5000)
 
         }
-        //锚点随机运动
+        //左队锚点随机运动
         function markerMove(marker, index = 0) {
             var lat = randomNum(33.464671, 33.664671);
             var lng = randomNum(118.859960, 118.959960);
@@ -569,7 +499,7 @@
                 L.polyline(jsonPathList.rightTeam[index], { color: colorList[index], weight: 2 }).addTo(map) // 绘制线到地图图层
             })
         }
-
+        //设置更新右队锚点
         function rightTeamSetRandomLatLng(markerList) {
             setRightTeamRandomLatLngTimer = setInterval(function () {
                 markerList.forEach(function (res, index) {
@@ -617,7 +547,48 @@
             })
         }
 
+
+
     </script>
+
+    <title>Gaoded statellite Map</title>
+</head>
+
+<body>
+    <div class="leftTeam">
+        <button id="ajaxTest">test</button>
+
+        <ul class="leftPlayers">
+
+        </ul>
+    </div>
+
+    <div class="rightTeam">
+        <ul class="rightPlayers">
+        </ul>
+    </div>
+
+    <div class="battleFieldSituationInfo">
+
+        <div class="blueTeam">
+            <h3 style="writing-mode: vertical-lr;">蓝方</h3>
+        </div>
+
+        <div class="scoreAndTime">
+            <div class="blueTeamSurvivors">4</div>
+            <p class="timeCounter" id="countdown"></p>
+            <div class="redTeamSurvivors">2</div>
+        </div>
+        <div class="redTeam">
+            <h3 style="writing-mode: vertical-lr;">红方</h3>
+        </div>
+
+    </div>
+
+    <div id='map'></div>
+
+
+
 </body>
 
 </html>
