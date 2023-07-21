@@ -194,7 +194,12 @@
     <script>
 
         window.onload = function () {
-            createInnerHTML(4);
+            createInnerHTML();
+
+            //************************************************************************           
+            //*********************变量***********************************************       
+            //************************************************************************  
+
             centerOfLongitude = 118.923888;  //经度中心点
             centerOfLatitude = 33.404774;   //纬度中心点
             defaultMapLevel = 10;              //默认显示地图层级
@@ -212,7 +217,18 @@
             jsonPathList = { "leftTeam": [], "rightTeam": [] }
             colorList = [];     //轨迹颜色
             leftPlayerInfoJsonList = [];  //信息
+
+            // (4) [{…}, {…}, {…}, {…}]
+            //     0: {id: '0', hp: 50}
+            //     1: {id: '1', hp: 100}
+            //     2: {id: '2', hp: 100}
+            //     3: {id: '3', hp: 100}
+
             rightPlayerInfoJsonList = []
+
+            //************************************************************************           
+            //*********************功能函数*******************************************           
+            //************************************************************************           
             // 每秒钟更新倒计时
             countDownTimer = setInterval(updateCountdown, 1000);
             updatePlayersHpDisplay();
@@ -224,10 +240,10 @@
                 markerPathDisplay(res, index);
             })
 
-            rightTeamSetRandomLatLng(jsonMarkerList.rightTeam);
-            jsonMarkerList.rightTeam.forEach(function (res, index) {
-                rightTeamMarkerPathDisplay(res, index);
-            })
+            // rightTeamSetRandomLatLng(jsonMarkerList.rightTeam);
+            // jsonMarkerList.rightTeam.forEach(function (res, index) {
+            //     rightTeamMarkerPathDisplay(res, index);
+            // })
 
 
             CountPlayersSurvivorsNumber(".leftPlayers", ".blueTeamSurvivors");  //蓝方幸存人数
@@ -237,6 +253,8 @@
             mouseEnterPlayerIconEvent(".rightPlayers");
             playersIconDoubleClickEvent(".leftPlayers");
             playersIconDoubleClickEvent(".rightPlayers");
+            // console.log('leftPlayerInfoJsonList');
+            // console.log(leftPlayerInfoJsonList);
         }
 
         function createInnerHTML(leaftPlayersNum = 5, rightPlayersNum = 5) {
@@ -245,7 +263,7 @@
             var leftStr = "";
             var rightStr = "";
             for (var i = 0; i < leaftPlayersNum; i++) {
-                leftStr += '<li data-hp="100">';
+                leftStr += '<li data-hp="100" data-id=' + (i) + ' data-index=' + (i) + '>';
                 leftStr += '    <img src="./icon/' + (i + 1) + '.jpg">';
                 leftStr += '    <div class="name">';
                 leftStr += '        <a>' + ("name" + parseInt(i + 1)) + '</a>';
@@ -257,7 +275,7 @@
             }
             document.querySelector(".leftPlayers").innerHTML = leftStr;
             for (var j = 0; j < rightPlayersNum; j++) {
-                rightStr += '<li data-hp="100">';
+                rightStr += '<li data-hp="0"" data-id=' + (j + leaftPlayersNum) + ' data-index=' + (j) + '>';
                 rightStr += '    <img src="./icon/' + (j + 1 + leaftPlayersNum) + '.jpg">';
                 rightStr += '    <div class="name">';
                 rightStr += '        <a>' + ("name" + parseInt(j + 1)) + '</a>';
@@ -268,7 +286,6 @@
                 rightStr += '</li>';
             }
             document.querySelector(".rightPlayers").innerHTML = rightStr;
-
         }
 
         function loadMap() {
@@ -279,7 +296,7 @@
             document.querySelector("#map").style.width = '1519px';
             //利用leaflet显示瓦片地图
             var tileLayer = L.tileLayer('http://localhost:8080/MyMap/newtask/{z}/{x}/{y}.jpg', {
-                minZoom: 10,
+                minZoom: 11,
                 maxZoom: 13,
                 tileSize: 256, // 瓦片尺寸，通常为256像素
                 //zoomOffset: 3, // 瓦片层级的偏移值，用于调整实际层级与显示层级之间的关系
@@ -319,7 +336,7 @@
                     updatePlayersHpDisplay();
                     CountPlayersSurvivorsNumber(".leftPlayers", ".blueTeamSurvivors");
                     CountPlayersSurvivorsNumber(".rightPlayers", ".redTeamSurvivors");
-                    console.log(event.getAttribute('data-hp'));
+                    // console.log(event.getAttribute('data-hp'));
                 });
             });
         }
@@ -342,8 +359,8 @@
                 clearInterval(setLeftTeamRandomLatLngTimer);
                 clearInterval(setRightTeamRandomLatLngTimer);
                 document.getElementById("countdown").textContent = "00:00";
-                console.log('jsonPathList');
-                console.log(jsonPathList);
+                // console.log('jsonPathList');
+                // console.log(jsonPathList);
                 return;
             }
             // 计算剩余的分钟和秒数
@@ -436,7 +453,7 @@
                     var lng = randomNum(118.859960, 118.959960);
                     var latlngPoint = L.latLng(lat, lng);
                     var marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);//标记点
-                    var jsonValue = { "name": liList[i].getAttribute('data-name'), "hp": parseInt(liList[i].getAttribute('data-hp')) };
+                    var jsonValue = { "id": liList[i].getAttribute('data-id'), "hp": parseInt(liList[i].getAttribute('data-hp')) };
                     leftPlayerInfoJsonList.push(jsonValue);//初始化json信息列表
                     pathTemp.push([lat, lng]);
                     jsonPathList.leftTeam.push(pathTemp);
@@ -454,7 +471,7 @@
                     var lng = randomNum(118.859960, 118.959960);
                     var latlngPoint = L.latLng(lat, lng);
                     var marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);//标记点
-                    var jsonValue = { "name": liList[i].getAttribute('data-name'), "hp": parseInt(liList[i].getAttribute('data-hp')) };
+                    var jsonValue = { "id": liList[i].getAttribute('data-id'), "hp": parseInt(liList[i].getAttribute('data-hp')) };
                     rightPlayerInfoJsonList.push(jsonValue);//初始化json信息列表
                     pathTemp.push([lat, lng]);
                     jsonPathList.rightTeam.push(pathTemp);
@@ -471,20 +488,43 @@
         }
 
         function leftTeamSetRandomLatLng(markerList) {
+            var leftLiList = document.querySelector(".leftPlayers").querySelectorAll("li");
 
             setLeftTeamRandomLatLngTimer = setInterval(function () {
-                markerList.forEach(function (res, index) {
-                    markerMove(res, index);
-                    // markerPathDisplay(res, index); //路径绘制函数放这里将抛弃初始点，只绘制更新的点
-                })
+
+                for (let i = 0; i < 5; i++) {
+                    var dataReceivedFromServer = sendDate();//接收模拟的后台传来的数据
+                    console.log("函数返回index");
+                    console.log(dataReceivedFromServer.id);
+                    console.log("函数返回坐标");
+                    console.log(dataReceivedFromServer.coord);
+
+                    leftLiList.forEach(function (res) {
+                        var id = res.getAttribute("data-id");
+                        if (id == dataReceivedFromServer.id) {
+                            var index = res.getAttribute("data-index");//获取对应id的index位置值
+                            markerMove(markerList[index], index, dataReceivedFromServer);
+                        }
+                    })
+                }
+                // markerList.forEach(function (res, index) {
+
+                //     markerMove(res, index);
+                //     // markerPathDisplay(res, index); //路径绘制函数放这里将抛弃初始点，只绘制更新的点
+                // })
             }, 5000)
 
         }
         //左队锚点随机运动
-        function markerMove(marker, index = 0) {
-            var lat = randomNum(33.464671, 33.664671);
-            var lng = randomNum(118.859960, 118.959960);
+        function markerMove(marker, index = 0, dataReceivedFromServer) {
+            var gps = dataReceivedFromServer.coord.split('|');
+            var lat = parseFloat(gps[0]);
+            var lng = parseFloat(gps[1]);
+            // var lat = randomNum(33.464671, 33.664671);
+            // var lng = randomNum(118.859960, 118.959960);
             if (leftPlayerInfoJsonList[index].hp > 0) {
+                console.log("左队所有坐标");
+                console.log(jsonPathList.leftTeam);
                 jsonPathList.leftTeam[index].length > 1 && jsonPathList.leftTeam[index].shift() // 保持数组长度，避免过度push不断重新绘制之前的路径
                 var pathTemp = jsonPathList.leftTeam[index];
                 pathTemp.push([lat, lng]);
@@ -547,7 +587,31 @@
             })
         }
 
+        //随机数，不包含max
+        function randomIntNum(min, max) {
+            var randomNum = Math.random() * (max - min) + min;
+            return parseInt(randomNum);
+        }
+        function randomGPS(min, max) {
+            var randomNum = Math.random() * (max - min) + min;
+            return parseFloat(randomNum.toFixed(6));
+        }
+        //模拟发送的数据
+        function sendDate() {
+            var date = [
+                { "id": "0", "coord": "113.123|24.369", "msg": 0 },
+                { "id": "1", "coord": "112.123|24.369", "msg": 0 },
+                { "id": "2", "coord": "111.123|24.369", "msg": 0 },
+                { "id": "3", "coord": "113.123|24.369", "msg": 0 },
+                { "id": "4", "coord": "113.123|24.369", "msg": 0 },
+            ];
 
+            var lat = randomGPS(33.464671, 33.664671);
+            var lng = randomGPS(118.859960, 118.959960);
+            var index = randomIntNum(0, 5)
+            date[index].coord = lat + '|' + lng;
+            return date[index]
+        }
 
     </script>
 
