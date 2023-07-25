@@ -236,24 +236,20 @@
             loadPlayerPoint(".leftPlayers");      //加载蓝方
             loadPlayerPoint(".rightPlayers");      //加载蓝方
 
-            testTimer=setInterval(function () {
+            testTimer = setInterval(function () {
                 var data = sendDate();
                 console.log(data);
                 leftTeamSetRandomLatLng(jsonMarkerList.leftTeam, data);    //随机位置加载
                 rightTeamSetRandomLatLng(jsonMarkerList.rightTeam, data);
-
-
             }, 5000)
-            // leftTeamSetRandomLatLng(jsonMarkerList.leftTeam);    //随机位置加载
-            jsonMarkerList.leftTeam.forEach(function (res, index) {
-                markerPathDisplay(res, index);
-            })
 
-            // rightTeamSetRandomLatLng(jsonMarkerList.rightTeam);
-            jsonMarkerList.rightTeam.forEach(function (res, index) {
-                rightTeamMarkerPathDisplay(res, index);
-            })
+            // jsonMarkerList.leftTeam.forEach(function (res, index) {
+            //     markerPathDisplay(res, index);
+            // })
 
+            // jsonMarkerList.rightTeam.forEach(function (res, index) {
+            //     rightTeamMarkerPathDisplay(res, index);
+            // })
 
             CountPlayersSurvivorsNumber(".leftPlayers", ".blueTeamSurvivors");  //蓝方幸存人数
             CountPlayersSurvivorsNumber(".rightPlayers", ".redTeamSurvivors");//红方幸存人数
@@ -275,7 +271,7 @@
                 leftStr += '<li data-hp="100" data-id=' + (i) + ' data-index=' + (i) + '>';
                 leftStr += '    <img src="./icon/' + (i + 1) + '.jpg">';
                 leftStr += '    <div class="name">';
-                leftStr += '        <a>' + ("name" + parseInt(i + 1)) + '</a>';
+                leftStr += '        <a>' + ("name" + parseInt(i)) + '</a>';
                 leftStr += '    </div>';
                 leftStr += '    <div class="hpContainer">';
                 leftStr += '        <div class="hpValueDisplay"></div>';
@@ -287,7 +283,7 @@
                 rightStr += '<li data-hp="100"" data-id=' + (j + leaftPlayersNum) + ' data-index=' + (j) + '>';
                 rightStr += '    <img src="./icon/' + (j + 1 + leaftPlayersNum) + '.jpg">';
                 rightStr += '    <div class="name">';
-                rightStr += '        <a>' + ("name" + parseInt(j + 1)) + '</a>';
+                rightStr += '        <a>' + ("name" + parseInt(j + leaftPlayersNum)) + '</a>';
                 rightStr += '    </div>';
                 rightStr += '    <div class="hpContainer">';
                 rightStr += '        <div class="hpValueDisplay"></div>';
@@ -310,6 +306,8 @@
                 tileSize: 256, // 瓦片尺寸，通常为256像素
                 //zoomOffset: 3, // 瓦片层级的偏移值，用于调整实际层级与显示层级之间的关系
             }).addTo(map);
+            // var center = map.getCenter();
+            // console.log(center); // 输出中心点的经纬度
 
         };
 
@@ -369,7 +367,7 @@
                 clearInterval(setLeftTeamRandomLatLngTimer);
                 clearInterval(setRightTeamRandomLatLngTimer);
                 clearInterval(testTimer);
-                
+
                 document.getElementById("countdown").textContent = "00:00";
                 console.log('jsonPathList');
                 console.log(jsonPathList);
@@ -453,6 +451,9 @@
             var Ul = document.querySelector(classNameOrID);
             var liList = Ul.querySelectorAll("li");
             getColor(liList.length);
+            var center = map.getCenter();
+            var lat = center.lat;
+            var lng = center.lng;
             if (classNameOrID.includes("left")) {
                 for (let i = 0; i < liList.length; i++) {
                     var pathTemp = [];
@@ -461,8 +462,8 @@
                         iconSize: [20],
                         className: classNameOrID.substring(1) + "Icon playersIcon"         //为自定义标记点图标添加类名
                     })
-                    var lat = randomNum(33.464671, 33.664671);
-                    var lng = randomNum(118.859960, 118.959960);
+                    // var lat = randomNum(33.464671, 33.664671);
+                    // var lng = randomNum(118.859960, 118.959960);
 
                     // var lat = 33.464671;
                     // var lng = 118.859960;
@@ -482,8 +483,8 @@
                         iconSize: [20],
                         className: classNameOrID.substring(1) + "Icon playersIcon"         //为自定义标记点图标添加类名
                     })
-                    var lat = randomNum(33.464671, 33.664671);
-                    var lng = randomNum(118.859960, 118.959960);
+                    // var lat = randomNum(33.464671, 33.664671);
+                    // var lng = randomNum(118.859960, 118.959960);
                     // var lat = 33.464671;
                     // var lng = 118.859960;
                     var latlngPoint = L.latLng(lat, lng);
@@ -508,15 +509,19 @@
             var leftLiList = document.querySelector(".leftPlayers").querySelectorAll("li");
             //array.slice(start, end) 截取字符串
             // var dataReceivedFromServer = JSON.parse(dataReceived);//接收后台传来的数据  假设传过来的直接是json字符串
-            var dataReceivedFromServer =dataReceived;
+            var dataReceivedFromServer = dataReceived;
             leftLiList.forEach(function (res) {
                 var id = res.getAttribute("data-id");
                 if (id == dataReceivedFromServer.id) {
                     var index = res.getAttribute("data-index");//获取对应id的index位置值
                     markerMove(markerList[index], index, dataReceivedFromServer);
                     // markerPathDisplay(res, index); //路径绘制函数放这里将抛弃初始点，只绘制更新的点
+                    markerPathDisplay(markerList[index], index);
+
                 }
+
             })
+
         }
         //左队锚点随机运动
         function markerMove(marker, index = 0, dataReceivedFromServer) {
@@ -543,14 +548,16 @@
             var rightLiList = document.querySelector(".rightPlayers").querySelectorAll("li");
             //array.slice(start, end) 截取字符串 1开始计数
             // var dataReceivedFromServer = JSON.parse(dataReceived);//接收后台传来的数据  假设传过来的直接是json字符串
-            var dataReceivedFromServer =dataReceived;
+            var dataReceivedFromServer = dataReceived;
             rightLiList.forEach(function (res) {
                 var id = res.getAttribute("data-id");
                 if (id == dataReceivedFromServer.id) {
                     var index = res.getAttribute("data-index");//获取对应id的index位置值
                     rightMarkerMove(markerList[index], index, dataReceivedFromServer);
+                    rightTeamMarkerPathDisplay(markerList[index], index);
                 }
             })
+
 
         }
         //右队锚点随机运动
