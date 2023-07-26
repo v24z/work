@@ -241,7 +241,7 @@
                 console.log(data);
                 leftTeamSetRandomLatLng(jsonMarkerList.leftTeam, data);    //随机位置加载
                 rightTeamSetRandomLatLng(jsonMarkerList.rightTeam, data);
-            }, 5000)
+            }, 10000)
 
             // jsonMarkerList.leftTeam.forEach(function (res, index) {
             //     markerPathDisplay(res, index);
@@ -262,8 +262,160 @@
             console.log(leftPlayerInfoJsonList);
         }
 
+        var client = null;					//成功连接后的客户端对象
+        var cnn_options = {					//连接MQTT的参数
+            "ServerUri": "127.0.0.1",
+            "ServerPort": 9001,
+            "UserName": "admin",				//服务器登录用户名
+            "PassWord": "123456",			//密码
+            "ClientId": "webSocket" + Math.random().toString(16).substr(2, 8), //客户端ID
+            "Path": "/mqtt",
+            "TimeOut": 30000,
+            "KeepAlive": 60000,//心跳保活时长
+            "CleanSession": false,//是否清理session
+            "SSL": false,//是否启用SSL安全
+            "willMessage": {
+                "topic": "",
+                "payload": "",
+                "qos": 0,
+                "retain": 0
+            },
+            //"ReConnect":false
+        }
+
+        //外部继承接口事件函数
+        var mqttstatus = false;
+        var startSubscribeTeam = false;//是否开始订阅队员状态
+
+        function OnConnectExtern() {//连接成功
+            //alert("连接成功");
+            mqttstatus = true;
+            console.log('连接成功');
+            if (startSubscribeTeam) {
+                console.log("开始订阅");
+
+                mqtt_subscribe("status");//订阅状态coord
+
+                console.log("开始发布");
+                //连接成功第一件事就是发送获取成员状态的指令
+                mqtt_pulish("order", "status:Publish Test");//order ,"coord"   ,order ,"stop"
+                console.log("发布成功");
+            };
+        }
+
+        function OnConnFailureExtern() {//连接服务器失败
+            mqttstatus = false;
+        }
+
+        function OnConnLostExtern() {//与服务器失去连接
+            mqttstatus = false;
+        }
+
+        function OnMsgSendOverExtern() {//消息发送成功
+
+        }
+
+        function OnMsgRecvExtern(topic, payload) {//处理接收消息
+            console.log("接收到消息");
+            if (!startSubscribeTeam)//如果没有订阅成员状态
+                return;
+
+            if (topic.indexOf("status") != -1) {
+                //payload 指定成员的状态
+                console.log(payload);//打印消息
+
+
+                //coord =topic
+
+            }
+            //取下一个标识号的状态
+            //mqtt_pulish("order" ,"status:23456");
+        };
+
+
+        /////////////////////////////
+        //开始状态检查，开启MQTT
+        function StartCheck() {
+            //置开始检查标识
+            startSubscribeTeam = true;
+
+            if (!mqttstatus) {
+                //连接MQTT
+                //alert("连接MQTT");
+                cnn_options.ClientId = "Rxiry_CS";
+                cnn_options.ServerPort = 8083;
+                cnn_options.ServerUri = "192.168.8.102";
+                MQTTconnect();
+                //alert("已经发送连接MQTT");		
+            } else {//先订阅，然后再发布开始消息
+                mqtt_subscribe("status");//用于获取成员状态
+
+                //先订阅第一个成员状态
+                mqtt_pulish("order", "status:coord");
+            }
+
+        }
         //////////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////
+        function test() {
+            var dataReceivedFromServer = {//接受到的人员数据
+                "icode": "", "msg": "GETMEN",
+                "data": "id_Flag=121234|name_attrib=红队;id_Flag=87654|name_attrib=红队;id_Flag=334455|name_attrib=红队;id_Flag=34563456|name_attrib=红队;id_Flag=234532456|name_attrib=蓝队;"
+            }
+            var data = dataReceivedFromServer.data;
+            data = data.split(";");
+            for (let i = 0; i < data.length; i++) {
+                data[i].length < 1 && data.splice(i)
+                if (data[i]) {
+                    var json = {}
+                    var str = data[i].split("|")
+                    str.forEach(res => {
+                        var temp = [];
+                        temp = res.split("=");
+                        json[temp[0]] = temp[1];
+                    })
+                    data[i] = json;
+                }
+            }
+
+            bluePlayersIDList = [], redPlayersIDList = [];//用于存储ID
+            data.forEach(res => {//分队伍存储人员ID
+                res.name_attrib == "蓝队" && bluePlayersIDList.push(res.id_Flag);
+                res.name_attrib == "红队" && redPlayersIDList.push(res.id_Flag);
+            })
+
+        }
+        //修改creatInnerHTML（）
+        // function createInnerHTML() {
+        //     test();
+        //     // GETMENCommand();
+        //     var leftStr = "";
+        //     var rightStr = "";
+        //     for (var i = 0; i < bluePlayersIDList.length; i++) {
+        //         leftStr += '<li data-hp="100" data-id=' + (bluePlayersIDList[i]) + ' data-index=' + (i) + '>';
+        //         leftStr += '    <img src="./icon/' + (i + 1) + '.jpg">';
+        //         leftStr += '    <div class="name">';
+        //         leftStr += '        <a>' + ("ID" + bluePlayersIDList[i]) + '</a>';
+        //         leftStr += '    </div>';
+        //         leftStr += '    <div class="hpContainer">';
+        //         leftStr += '        <div class="hpValueDisplay"></div>';
+        //         leftStr += '    </div>';
+        //         leftStr += '</li>';
+        //     }
+        //     document.querySelector(".leftPlayers").innerHTML = leftStr;
+        //     for (var j = 0; j < redPlayersIDList.length; j++) {
+        //         rightStr += '<li data-hp="100"" data-id=' + (redPlayersIDList[j]) + ' data-index=' + (j) + '>';
+        //         rightStr += '    <img src="./icon/' + (j + 1 + bluePlayersIDList.length) + '.jpg">';
+        //         rightStr += '    <div class="name">';
+        //         rightStr += '        <a>' + ("ID" + redPlayersIDList[j]) + '</a>';
+        //         rightStr += '    </div>';
+        //         rightStr += '    <div class="hpContainer">';
+        //         rightStr += '        <div class="hpValueDisplay"></div>';
+        //         rightStr += '    </div>';
+        //         rightStr += '</li>';
+        //     }
+        //     document.querySelector(".rightPlayers").innerHTML = rightStr;
+        // }
         function createInnerHTML(leaftPlayersNum = 5, rightPlayersNum = 5) {
             var leftStr = "";
             var rightStr = "";
@@ -292,7 +444,6 @@
             }
             document.querySelector(".rightPlayers").innerHTML = rightStr;
         }
-
         function loadMap() {
             //设置id是map的容器宽高 = 浏览器可视区域宽高
             // document.querySelector("#map").style.height = document.documentElement.clientHeight + 'px';
@@ -301,7 +452,7 @@
             document.querySelector("#map").style.width = '1519px';
             //利用leaflet显示瓦片地图
             var tileLayer = L.tileLayer('http://localhost:8080/MyMap/newtask/{z}/{x}/{y}.jpg', {
-                minZoom: 11,
+                minZoom: 10,
                 maxZoom: 13,
                 tileSize: 256, // 瓦片尺寸，通常为256像素
                 //zoomOffset: 3, // 瓦片层级的偏移值，用于调整实际层级与显示层级之间的关系
@@ -471,7 +622,7 @@
                     var marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);//标记点
                     var jsonValue = { "id": liList[i].getAttribute('data-id'), "hp": parseInt(liList[i].getAttribute('data-hp')) };
                     leftPlayerInfoJsonList.push(jsonValue);//初始化json信息列表
-                    pathTemp.push([lat, lng]);
+                    pathTemp.push([]);
                     jsonPathList.leftTeam.push(pathTemp);
                     jsonMarkerList.leftTeam.push(marker);
                 }
@@ -491,7 +642,7 @@
                     var marker = L.marker(latlngPoint, { icon: Icon }).addTo(map);//标记点
                     var jsonValue = { "id": liList[i].getAttribute('data-id'), "hp": parseInt(liList[i].getAttribute('data-hp')) };
                     rightPlayerInfoJsonList.push(jsonValue);//初始化json信息列表
-                    pathTemp.push([lat, lng]);
+                    pathTemp.push([]);
                     jsonPathList.rightTeam.push(pathTemp);
                     jsonMarkerList.rightTeam.push(marker);
                 }
@@ -509,19 +660,18 @@
             var leftLiList = document.querySelector(".leftPlayers").querySelectorAll("li");
             //array.slice(start, end) 截取字符串
             // var dataReceivedFromServer = JSON.parse(dataReceived);//接收后台传来的数据  假设传过来的直接是json字符串
-            var dataReceivedFromServer = dataReceived;
-            leftLiList.forEach(function (res) {
-                var id = res.getAttribute("data-id");
-                if (id == dataReceivedFromServer.id) {
-                    var index = res.getAttribute("data-index");//获取对应id的index位置值
-                    markerMove(markerList[index], index, dataReceivedFromServer);
-                    // markerPathDisplay(res, index); //路径绘制函数放这里将抛弃初始点，只绘制更新的点
-                    markerPathDisplay(markerList[index], index);
-
-                }
-
-            })
-
+            // var dataReceivedFromServer = dataReceived;
+            for (let i = 0; i < dataReceived.length; i++) {
+                leftLiList.forEach(function (res) {
+                    var id = res.getAttribute("data-id");
+                    if (id == dataReceived[i].id) {
+                        var index = res.getAttribute("data-index");//获取对应id的index位置值
+                        markerMove(markerList[index], index, dataReceived[i]);
+                        // markerPathDisplay(res, index); //路径绘制函数放这里将抛弃初始点，只绘制更新的点
+                        markerPathDisplay(markerList[index], index);
+                    }
+                })
+            }
         }
         //左队锚点随机运动
         function markerMove(marker, index = 0, dataReceivedFromServer) {
@@ -543,23 +693,42 @@
                 L.polyline(jsonPathList.rightTeam[index], { color: colorList[index], weight: 2 }).addTo(map) // 绘制线到地图图层
             })
         }
-        //设置更新右队锚点
+        // //设置更新右队锚点
+        // function rightTeamSetRandomLatLng(markerList, dataReceived) {
+        //     var rightLiList = document.querySelector(".rightPlayers").querySelectorAll("li");
+        //     //array.slice(start, end) 截取字符串 1开始计数
+        //     // var dataReceivedFromServer = JSON.parse(dataReceived);//接收后台传来的数据  假设传过来的直接是json字符串
+        //     var dataReceivedFromServer = dataReceived;
+        //     rightLiList.forEach(function (res) {
+        //         var id = res.getAttribute("data-id");
+        //         if (id == dataReceivedFromServer.id) {
+        //             var index = res.getAttribute("data-index");//获取对应id的index位置值
+        //             rightMarkerMove(markerList[index], index, dataReceivedFromServer);
+        //             rightTeamMarkerPathDisplay(markerList[index], index);
+        //         }
+        //     })
+
+
+        // }
+
+        //设置更新右队锚点(修改)
         function rightTeamSetRandomLatLng(markerList, dataReceived) {
             var rightLiList = document.querySelector(".rightPlayers").querySelectorAll("li");
             //array.slice(start, end) 截取字符串 1开始计数
             // var dataReceivedFromServer = JSON.parse(dataReceived);//接收后台传来的数据  假设传过来的直接是json字符串
             var dataReceivedFromServer = dataReceived;
-            rightLiList.forEach(function (res) {
-                var id = res.getAttribute("data-id");
-                if (id == dataReceivedFromServer.id) {
-                    var index = res.getAttribute("data-index");//获取对应id的index位置值
-                    rightMarkerMove(markerList[index], index, dataReceivedFromServer);
-                    rightTeamMarkerPathDisplay(markerList[index], index);
-                }
-            })
-
-
+            for (let j = 0; j < dataReceived.length; j++) {
+                rightLiList.forEach(function (res) {
+                    var id = res.getAttribute("data-id");
+                    if (id == dataReceived[j].id) {
+                        var index = res.getAttribute("data-index");//获取对应id的index位置值
+                        rightMarkerMove(markerList[index], index, dataReceived[j]);
+                        rightTeamMarkerPathDisplay(markerList[index], index);
+                    }
+                })
+            }
         }
+
         //右队锚点随机运动
         function rightMarkerMove(marker, index = 0, dataReceivedFromServer) {
             var gps = dataReceivedFromServer.coord.split('|');
@@ -607,7 +776,28 @@
             var randomNum = Math.random() * (max - min) + min;
             return parseFloat(randomNum.toFixed(6));
         }
-        //模拟发送的数据
+        // //模拟发送的数据
+        // function sendDate() {
+        //     var date = [
+        //         { "id": "0", "coord": "113.123|24.369", "msg": 0 },
+        //         { "id": "1", "coord": "112.123|24.369", "msg": 0 },
+        //         { "id": "2", "coord": "111.123|24.369", "msg": 0 },
+        //         { "id": "3", "coord": "113.123|24.369", "msg": 0 },
+        //         { "id": "4", "coord": "113.123|24.369", "msg": 0 },
+        //         { "id": "5", "coord": "113.123|24.369", "msg": 0 },
+        //         { "id": "6", "coord": "113.123|24.369", "msg": 0 },
+        //         { "id": "7", "coord": "113.123|24.369", "msg": 0 },
+        //         { "id": "8", "coord": "113.123|24.369", "msg": 0 },
+        //         { "id": "9", "coord": "113.123|24.369", "msg": 0 },
+        //     ];
+
+        //     var lat = randomGPS(33.464671, 33.664671);
+        //     var lng = randomGPS(118.859960, 118.959960);
+        //     var index = randomIntNum(0, 9)
+        //     date[index].coord = lat + '|' + lng;
+        //     return date[index]
+        // }
+        //模拟发送的数据(修改)
         function sendDate() {
             var date = [
                 { "id": "0", "coord": "113.123|24.369", "msg": 0 },
@@ -621,12 +811,71 @@
                 { "id": "8", "coord": "113.123|24.369", "msg": 0 },
                 { "id": "9", "coord": "113.123|24.369", "msg": 0 },
             ];
+            tempList = []
+            var index, lat, lng;
+            for (let i = 0; i < 2; i++) {
+                index = randomIntNum(0, 10);
+                // console.log(index);
 
-            var lat = randomGPS(33.464671, 33.664671);
-            var lng = randomGPS(118.859960, 118.959960);
-            var index = randomIntNum(0, 9)
-            date[index].coord = lat + '|' + lng;
-            return date[index]
+                lat = randomGPS(33.464671, 33.664671);
+                lng = randomGPS(118.859960, 118.959960);
+                // console.log(lat + '|' + lng);
+                date[index].coord = lat + '|' + lng;
+                tempList.push(date[index]);
+            }
+            return tempList;
+        }
+
+
+        //GETMEN命令并处理获得的数据
+        function GETMENCommand() {
+            bluePlayersIDList = [], redPlayersIDList = [];//用于存储ID  提升为全局变量
+            $.ajax({
+                url: "http://localhost:8090/servlet/ShootData",
+                type: "GET",
+                data: { funTypeName: "GETMEN" },
+                dataType: "JSON",
+                success: function (res) {
+                    //需返回一个状态 status
+                    //{"status":true/false,"data":{.....}}
+                    if (res.status) {
+                        //成功返回人员信息
+                        var data = dataReceivedFromServer.data;
+                        data = data.split(";");
+                        for (let i = 0; i < data.length; i++) {
+                            data[i].length < 1 && data.splice(i)
+                            if (data[i]) {
+                                var json = {}
+                                var str = data[i].split("|")
+                                str.forEach(res => {
+                                    var temp = [];
+                                    temp = res.split("=");
+                                    json[temp[0]] = temp[1];
+                                })
+                                data[i] = json;
+                            }
+                        }
+                        console.log(data);
+                        data.forEach(res => {//分队伍存储人员ID
+                            res.name_attrib == "蓝队" && bluePlayersIDList.push(res.id_Flag);
+                            res.name_attrib == "红队" && redPlayersIDList.push(res.id_Flag);
+                        })
+                    } else {
+
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.log(jqXHR.responseText);
+                    console.log(jqXHR.status);
+                    console.log(jqXHR.readyState);
+                    console.log(jqXHR.statusText);
+                    console.log(textStatus);
+                    console.log(errorThrown);
+                }
+            })
+        }
+        function getTheSpecifiedIDStatusData(ID) {
+
         }
 
 
