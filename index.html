@@ -271,7 +271,13 @@
 
         window.onload = function () {
             createInnerHTML(4);
-
+            var liList = document.querySelectorAll('li')
+            var IDList = []
+            liList.forEach(function (res) {
+                IDList.push(res.getAttribute("data-id"));
+            })
+            console.log(IDList);
+            sendAjaxs(IDList);
             //************************************************************************           
             //*********************变量***********************************************       
             //************************************************************************  
@@ -317,7 +323,7 @@
                 console.log(data);
                 leftTeamSetRandomLatLng(jsonMarkerList.leftTeam, data);    //随机位置加载
                 rightTeamSetRandomLatLng(jsonMarkerList.rightTeam, data);
-            }, 1000)
+            }, 10000)
 
             // jsonMarkerList.leftTeam.forEach(function (res, index) {
             //     markerPathDisplay(res, index);
@@ -500,7 +506,7 @@
             var leftStr = "";
             var rightStr = "";
             for (var i = 0; i < bluePlayersIDList.length; i++) {
-                leftStr += '<li data-hp="100" data-id=' + (bluePlayersIDList[i]) + ' data-index=' + (i) +' data-hit_state=" "' +' data-NumberOfRevive="0"' +' data-DamageDescription=" "' + '>';
+                leftStr += '<li data-hp="100" data-id=' + (bluePlayersIDList[i]) + ' data-index=' + (i) + ' data-hit_state=" "' + ' data-NumberOfRevive="0"' + ' data-DamageDescription=" "' + '>';
                 leftStr += '    <img src="./icon/' + (i + 1) + '.jpg">';
                 leftStr += '    <div class="name">';
                 leftStr += '        <a>' + ("ID" + bluePlayersIDList[i]) + '</a>';
@@ -512,7 +518,7 @@
             }
             document.querySelector(".leftPlayers").innerHTML = leftStr;
             for (var j = 0; j < redPlayersIDList.length; j++) {
-                rightStr += '<li data-hp="100" data-id=' + (redPlayersIDList[j]) + ' data-index=' + (j) +' data-hit_state=" "' +' data-NumberOfRevive="0"' +' data-DamageDescription=" "' + '>';
+                rightStr += '<li data-hp="100" data-id=' + (redPlayersIDList[j]) + ' data-index=' + (j) + ' data-hit_state=" "' + ' data-NumberOfRevive="0"' + ' data-DamageDescription=" "' + '>';
                 rightStr += '    <img src="./icon/' + (j + 1 + bluePlayersIDList.length) + '.jpg">';
                 rightStr += '    <div class="name">';
                 rightStr += '        <a>' + ("ID" + redPlayersIDList[j]) + '</a>';
@@ -904,8 +910,7 @@
             }
             return tempList;
         }
-
-
+        //指令2
         //GETMEN命令获得所有人员基本数据并处理获得的数据
         function GETMENCommand() {
             bluePlayersIDList = [], redPlayersIDList = [];//用于存储ID  提升为全局变量
@@ -943,16 +948,12 @@
 
                     }
                 },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    console.log(jqXHR.responseText);
-                    console.log(jqXHR.status);
-                    console.log(jqXHR.readyState);
-                    console.log(jqXHR.statusText);
-                    console.log(textStatus);
-                    console.log(errorThrown);
+                error: function () {
+                    console.log("GETMEN错误");
                 }
             })
         }
+        //指令3
         //恢复人员HP至满状态(复活)
         //放到头像双击事件中
         function ResetPlayerStatus(ID) {
@@ -960,6 +961,7 @@
             if (waitToResetHPsPlayer) {
                 //将指定玩家HP恢复
                 waitToResetHPsPlayer.setAttribute("data-hp", 100);
+                waitToResetHPsPlayer.setAttribute("data-numberofrevive",parseInt(waitToResetHPsPlayer.getAttribute("data-numberofrevive"))+1)
 
                 if (waitToResetHPsPlayer.parentNode.getAttribute("class").includes("left")) {
                     waitToResetHPsPlayer.style.backgroundColor = "#86ceea";
@@ -1013,6 +1015,41 @@
             // })
 
         }
+        //后台获取每个ID的状态并更新
+        function sendAjaxs(IDList) {
+            var index = 0;
+            sendAjax();
+            function sendAjax() {
+                if (index >= IDList.length) {
+                    return;
+                }
+                var liExist = document.querySelector('li[data-id=' + '"' + (IDList[index]) + '"' + ']');
+                //指令1
+                $.ajax({
+                    url: "http://localhost:8090/servlet/ShootData",
+                    type: "GET",
+                    async: true,//异步
+                    data: {
+                        funTypeName: "LIVINGSTATE",
+                        id_Flag: IDList[index],
+                    },
+                    dataType: "JSON",
+                    success: function (res) {
+                        var li = document.querySelector('li[data-id=' + '"' + (res.id_Flag) + '"' + ']');
+                        li.setAttribute("data-hit_state", res.hit_state);
+                        li.setAttribute("data-NumberOfRevive", res.cts_revive);
+                        li.setAttribute("data-hp", res.blood_volume);
+                        li.setAttribute("data-DamageDescription", res.disc_damage);
+                        index++;
+                        sendAjax();
+                    },
+                    error: function () {
+                        console.log(IDList[index]+"ajax请求错误");
+                    }
+                })
+            }
+        }
+
 
     </script>
 
