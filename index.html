@@ -264,8 +264,8 @@
 
     <script src="leaflet.js"></script>
     <script src="jquery.js"></script>
-    <script src="paho-mqtt.js"></script>
-    <script src="mymqtt.js"></script>
+    <!-- <script src="paho-mqtt.js"></script>
+    <script src="mymqtt.js"></script> -->
 
     <script>
 
@@ -287,7 +287,7 @@
             defaultMapLevel = 10;              //默认显示地图层级
             map = L.map('map').setView([centerOfLatitude, centerOfLongitude], defaultMapLevel);      //设置地图
             targetTime = new Date();                        //当前时间
-            targetTime.setMinutes(targetTime.getMinutes() + 6); //设置时间
+            targetTime.setMinutes(targetTime.getMinutes() + 1); //设置时间
 
             countDownTimer = undefined;  //倒计时计时器
             setLeftTeamRandomLatLngTimer = undefined;  //加载更新左方队员位置计时器
@@ -307,7 +307,6 @@
             //     3: {id: '3', hp: 100}
 
             rightPlayerInfoJsonList = []
-
             //************************************************************************           
             //*********************功能函数*******************************************           
             //************************************************************************           
@@ -491,9 +490,10 @@
                     data[i] = json;
                 }
             }
-
+            IDList = []
             bluePlayersIDList = [], redPlayersIDList = [];//用于存储ID
             data.forEach(res => {//分队伍存储人员ID
+                IDList.push(res.id_Flag);
                 res.name_attrib == "蓝队" && bluePlayersIDList.push(res.id_Flag);
                 res.name_attrib == "红队" && redPlayersIDList.push(res.id_Flag);
             })
@@ -501,8 +501,15 @@
         }
         //修改creatInnerHTML（）
         function createInnerHTML() {
+            IDAndPathJsonList = []        //存储ID和对应经过的路径点
             test();
             // GETMENCommand();
+            for (let i = 0; i < IDList.length; i++) {
+                var jsonList = { "id": "", "path": [] };
+                jsonList.id = IDList[i];
+                IDAndPathJsonList.push(jsonList);
+            }
+            console.log(IDAndPathJsonList);
             var leftStr = "";
             var rightStr = "";
             for (var i = 0; i < bluePlayersIDList.length; i++) {
@@ -632,6 +639,8 @@
                 clearInterval(setLeftTeamRandomLatLngTimer);
                 clearInterval(setRightTeamRandomLatLngTimer);
                 clearInterval(testTimer);
+                // saveAsJson(JSON.stringify(IDAndPathJsonList))
+
 
                 document.getElementById("countdown").textContent = "00:00";
                 console.log('jsonPathList');
@@ -783,16 +792,26 @@
                         markerMove(markerList[index], index, dataReceived[i]);
                         // markerPathDisplay(res, index); //路径绘制函数放这里将抛弃初始点，只绘制更新的点
                         // markerPathDisplay(markerList[index], index);
+                        console.log(IDAndPathJsonList);
                     }
                 })
             }
         }
         //左队锚点随机运动
         function markerMove(marker, index = 0, dataReceivedFromServer) {
+
             var gps = dataReceivedFromServer.coord.split('|');
             var lat = parseFloat(gps[0]);
             var lng = parseFloat(gps[1]);
+            console.log([lat, lng]);
+
             if (leftPlayerInfoJsonList[index].hp > 0) {
+                for (let i = 0; i < IDAndPathJsonList.length; i++) {
+                    if (IDAndPathJsonList[i].id == dataReceivedFromServer.id) {
+                        IDAndPathJsonList[i].path.push([lat, lng]);
+                        break;
+                    }
+                }
                 jsonPathList.leftTeam[index].length > 1 && jsonPathList.leftTeam[index].shift() // 保持数组长度，避免过度push不断重新绘制之前的路径
                 var pathTemp = jsonPathList.leftTeam[index];
                 pathTemp.push([lat, lng]);
@@ -831,7 +850,14 @@
             var gps = dataReceivedFromServer.coord.split('|');
             var lat = parseFloat(gps[0]);
             var lng = parseFloat(gps[1]);
+
             if (rightPlayerInfoJsonList[index].hp > 0) {
+                for (let i = 0; i < IDAndPathJsonList.length; i++) {
+                    if (IDAndPathJsonList[i].id == dataReceivedFromServer.id) {
+                        IDAndPathJsonList[i].path.push([lat, lng]);
+                        break;
+                    }
+                }
                 jsonPathList.rightTeam[index].length > 1 && jsonPathList.rightTeam[index].shift() // 保持数组长度，避免过度push不断重新绘制之前的路径
                 var pathTemp = jsonPathList.rightTeam[index];
                 pathTemp.push([lat, lng]);
@@ -913,6 +939,7 @@
         //指令2
         //GETMEN命令获得所有人员基本数据并处理获得的数据
         function GETMENCommand() {
+            IDList = []
             bluePlayersIDList = [], redPlayersIDList = [];//用于存储ID  提升为全局变量
             $.ajax({
                 url: "http://localhost:8090/servlet/ShootData",
@@ -941,6 +968,7 @@
                         }
                         console.log(data);
                         data.forEach(res => {//分队伍存储人员ID
+                            IDList.push(res.id_Flag);
                             res.name_attrib == "蓝队" && bluePlayersIDList.push(res.id_Flag);
                             res.name_attrib == "红队" && redPlayersIDList.push(res.id_Flag);
                         })
@@ -961,7 +989,7 @@
             if (waitToResetHPsPlayer) {
                 //将指定玩家HP恢复
                 waitToResetHPsPlayer.setAttribute("data-hp", 100);
-                waitToResetHPsPlayer.setAttribute("data-numberofrevive",parseInt(waitToResetHPsPlayer.getAttribute("data-numberofrevive"))+1)
+                waitToResetHPsPlayer.setAttribute("data-numberofrevive", parseInt(waitToResetHPsPlayer.getAttribute("data-numberofrevive")) + 1)
 
                 if (waitToResetHPsPlayer.parentNode.getAttribute("class").includes("left")) {
                     waitToResetHPsPlayer.style.backgroundColor = "#86ceea";
@@ -1044,10 +1072,27 @@
                         sendAjax();
                     },
                     error: function () {
-                        console.log(IDList[index]+"ajax请求错误");
+                        console.log(IDList[index] + "ajax请求错误");
                     }
                 })
             }
+        }
+        function saveAsJson(str) {
+            const blob = new Blob([str], { type: "application/json;charset=utf-8" });
+            const href = URL.createObjectURL(blob);
+            const alink = document.createElement("a");
+            alink.style.display = "none";
+            alink.download = "路径.json"; // 下载后文件名
+            alink.href = href;
+            document.body.appendChild(alink);
+            alink.click();
+            document.body.removeChild(alink); // 下载完成移除元素
+            URL.revokeObjectURL(href); // 释放掉blob对象
+        }
+        function downLoad() {
+
+            saveAsJson(JSON.stringify(IDAndPathJsonList))
+
         }
 
 
@@ -1057,7 +1102,9 @@
 </head>
 
 <body>
+
     <div class="leftTeam">
+        <button onclick="downLoad()">点击我下载文件</button>
         <button id="ajaxTest">test</button>
 
         <ul class="leftPlayers">
