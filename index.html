@@ -281,14 +281,15 @@
             //************************************************************************           
             //*********************变量***********************************************       
             //************************************************************************  
+            webSocket = new WebSocket('ws://localhost:8080/savePathToFile/websocket');
 
             centerOfLongitude = 118.923888;  //经度中心点
             centerOfLatitude = 33.404774;   //纬度中心点
             defaultMapLevel = 10;              //默认显示地图层级
             map = L.map('map').setView([centerOfLatitude, centerOfLongitude], defaultMapLevel);      //设置地图
             targetTime = new Date();                        //当前时间
-            gameMinutes = 6
-            getGameTime();
+            gameMinutes = 1
+            // getGameTime();
             targetTime.setMinutes(targetTime.getMinutes() + gameMinutes); //设置时间
 
             countDownTimer = undefined;  //倒计时计时器
@@ -353,6 +354,17 @@
             confirmBtn.onclick = confirmBtnEvent;
             closes[0].onclick = closeModal;
             closes[1].onclick = closeModal;
+            webSocket.onerror = function (event) {
+                onError(event)
+            };
+
+            webSocket.onopen = function (event) {
+                onOpen(event)
+            };
+
+            webSocket.onmessage = function (event) {
+                onMessage(event)
+            };
         }
         {
             var client = null;					//成功连接后的客户端对象
@@ -488,15 +500,18 @@
                     var json = {}
                     var str = data[i].split("|")
                     str.forEach(res => {
-                        var temp = [];
+                        var tempList = [];
                         temp = res.split("=");
                         json[temp[0]] = temp[1];
                     })
                     data[i] = json;
                 }
             }
+            IDList = []//初始化获得所有ID，用于测试保存的路径是否正确
             bluePlayersIDList = [], redPlayersIDList = [];//用于存储ID
             data.forEach(res => {//分队伍存储人员ID
+                IDList.push(res.id_Flag);
+
                 res.name_attrib == "蓝队" && bluePlayersIDList.push(res.id_Flag);
                 res.name_attrib == "红队" && redPlayersIDList.push(res.id_Flag);
             })
@@ -504,8 +519,16 @@
         }
         //修改creatInnerHTML（）
         function createInnerHTML() {
+            IDAndPathJsonList = []        //存储ID和对应经过的路径点
+
             test();
             // GETMENCommand();
+            for (let i = 0; i < IDList.length; i++) {
+                var jsonList = { "id": "", "path": [] };
+                jsonList.id = IDList[i];
+                IDAndPathJsonList.push(jsonList);
+            }
+
             var leftStr = "";
             var rightStr = "";
             for (var i = 0; i < bluePlayersIDList.length; i++) {
@@ -656,7 +679,7 @@
                 clearInterval(setLeftTeamRandomLatLngTimer);
                 clearInterval(setRightTeamRandomLatLngTimer);
                 clearInterval(testTimer);
-
+                webSocket.close()
                 document.getElementById("countdown").textContent = "00:00";
                 console.log('jsonPathList');
                 console.log(jsonPathList);
@@ -817,12 +840,22 @@
             var lat = parseFloat(gps[0]);
             var lng = parseFloat(gps[1]);
             if (leftPlayerInfoJsonList[index].hp > 0) {
+                for (let i = 0; i < IDAndPathJsonList.length; i++) {
+                    if (IDAndPathJsonList[i].id == dataReceivedFromServer.id) {
+                        IDAndPathJsonList[i].path.push([lat, lng]);
+                        break;
+                    }
+                }
                 jsonPathList.leftTeam[index].length > 1 && jsonPathList.leftTeam[index].shift() // 保持数组长度，避免过度push不断重新绘制之前的路径
                 var pathTemp = jsonPathList.leftTeam[index];
                 pathTemp.push([lat, lng]);
                 jsonPathList.leftTeam[index] = pathTemp;
                 var newLatlngPoint = L.latLng(lat, lng);
                 leftPlayerInfoJsonList[index].hp > 0 && marker.setLatLng(newLatlngPoint);
+                //处理收到的json消息，提取id与处理经纬度转成字符传给servlet接口
+                var dataToSend = { "id": dataReceivedFromServer.id, "path": [lat, lng] };
+                var jsonToString = JSON.stringify(dataToSend);
+                start(jsonToString);
             }
         }
         //显示右锚点运动轨迹
@@ -856,12 +889,22 @@
             var lat = parseFloat(gps[0]);
             var lng = parseFloat(gps[1]);
             if (rightPlayerInfoJsonList[index].hp > 0) {
+                for (let i = 0; i < IDAndPathJsonList.length; i++) {
+                    if (IDAndPathJsonList[i].id == dataReceivedFromServer.id) {
+                        IDAndPathJsonList[i].path.push([lat, lng]);
+                        break;
+                    }
+                }
                 jsonPathList.rightTeam[index].length > 1 && jsonPathList.rightTeam[index].shift() // 保持数组长度，避免过度push不断重新绘制之前的路径
                 var pathTemp = jsonPathList.rightTeam[index];
                 pathTemp.push([lat, lng]);
                 jsonPathList.rightTeam[index] = pathTemp;
                 var newLatlngPoint = L.latLng(lat, lng);
                 rightPlayerInfoJsonList[index].hp > 0 && marker.setLatLng(newLatlngPoint);
+                //处理收到的json消息，提取id与处理经纬度转成字符传给servlet接口
+                var dataToSend = { "id": dataReceivedFromServer.id, "path": [lat, lng] };
+                var jsonToString = JSON.stringify(dataToSend);
+                start(jsonToString);
             }
         }
 
@@ -1096,6 +1139,43 @@
             });
 
         }
+
+        function onMessage(event) {
+            console.log("服务器说：" + event.data);
+        }
+        function onOpen(event) {
+            console.log("Connection established");
+
+        }
+
+        function onError(event) {
+            console.log(event.data);
+        }
+
+        function start(data) {
+            if (webSocket.readyState === 1) {
+
+                webSocket.send(data);
+                return false;
+            }
+        }
+        function saveAsJson(str) {
+            const blob = new Blob([str], { type: "application/json;charset=utf-8" });
+            const href = URL.createObjectURL(blob);
+            const alink = document.createElement("a");
+            alink.style.display = "none";
+            alink.download = "路径.json"; // 下载后文件名
+            alink.href = href;
+            document.body.appendChild(alink);
+            alink.click();
+            document.body.removeChild(alink); // 下载完成移除元素
+            URL.revokeObjectURL(href); // 释放掉blob对象
+        }
+        function downLoad() {
+
+            saveAsJson(JSON.stringify(IDAndPathJsonList))
+
+        }
     </script>
 
     <title>Gaoded statellite Map</title>
@@ -1103,6 +1183,8 @@
 
 <body>
     <div class="leftTeam">
+        <button onclick="downLoad()">点击我下载文件</button>
+
         <button id="ajaxTest">test</button>
 
         <ul class="leftPlayers">
