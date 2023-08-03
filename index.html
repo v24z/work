@@ -322,6 +322,7 @@
             loadPlayerPoint(".rightPlayers");      //加载蓝方
 
             testTimer = setInterval(function () {
+                //模拟的数据直接是json格式
                 var data = sendDate();
                 console.log(data);
                 leftTeamSetRandomLatLng(jsonMarkerList.leftTeam, data);    //随机位置加载
@@ -649,7 +650,7 @@
                         },
                         dataType: "JSON",
                         success: function (res) {
-                            if (res == "ok") {
+                            if (res.msg == "ok") {
                                 console.log("UPDAMAGE: " + playerID);
                             }
                         },
@@ -822,12 +823,12 @@
             //array.slice(start, end) 截取字符串
             // var dataReceivedFromServer = JSON.parse(dataReceived);//接收后台传来的数据  假设传过来的直接是json字符串
             // var dataReceivedFromServer = dataReceived;
-            for (let i = 0; i < dataReceived.length; i++) {
+            for (let i = 0; i < dataReceived.data.length; i++) {
                 leftLiList.forEach(function (res) {
                     var id = res.getAttribute("data-id");
-                    if (id == dataReceived[i].id) {
+                    if (id == dataReceived.data[i].id_Flag) {
                         var index = res.getAttribute("data-index");//获取对应id的index位置值
-                        markerMove(markerList[index], index, dataReceived[i]);
+                        markerMove(markerList[index], index, dataReceived.data[i]);
                         // markerPathDisplay(res, index); //路径绘制函数放这里将抛弃初始点，只绘制更新的点
                         // markerPathDisplay(markerList[index], index);
                     }
@@ -871,12 +872,12 @@
             //array.slice(start, end) 截取字符串 1开始计数
             // var dataReceivedFromServer = JSON.parse(dataReceived);//接收后台传来的数据  假设传过来的直接是json字符串
             var dataReceivedFromServer = dataReceived;
-            for (let j = 0; j < dataReceived.length; j++) {
+            for (let j = 0; j < dataReceived.data.length; j++) {
                 rightLiList.forEach(function (res) {
                     var id = res.getAttribute("data-id");
-                    if (id == dataReceived[j].id) {
+                    if (id == dataReceived.data[j].id_Flag) {
                         var index = res.getAttribute("data-index");//获取对应id的index位置值
-                        rightMarkerMove(markerList[index], index, dataReceived[j]);
+                        rightMarkerMove(markerList[index], index, dataReceived.data[j]);
                         // rightTeamMarkerPathDisplay(markerList[index], index);
                     }
                 })
@@ -957,25 +958,23 @@
                 // { "id": "7", "coord": "113.123|24.369", "msg": 0 },
                 // { "id": "8", "coord": "113.123|24.369", "msg": 0 },
                 // { "id": "9", "coord": "113.123|24.369", "msg": 0 },
-                { "id": "121234", "coord": "113.123|24.369", "msg": 0 },
-                { "id": "87654", "coord": "112.123|24.369", "msg": 0 },
-                { "id": "334455", "coord": "111.123|24.369", "msg": 0 },
-                { "id": "34563456", "coord": "113.123|24.369", "msg": 0 },
-                { "id": "234532456", "coord": "113.123|24.369", "msg": 0 },
+                { "id_Flag": "121234", "coord": "113.123|24.369", "msg": 0 },
+                { "id_Flag": "87654", "coord": "112.123|24.369", "msg": 0 },
+                { "id_Flag": "334455", "coord": "111.123|24.369", "msg": 0 },
+                { "id_Flag": "34563456", "coord": "113.123|24.369", "msg": 0 },
+                { "id_Flag": "234532456", "coord": "113.123|24.369", "msg": 0 },
             ];
-            tempList = []
+            b = { "icode": "", "msg": "status", "data": [] }//模拟接受到的数据
             var index, lat, lng;
             for (let i = 0; i < 2; i++) {
                 index = randomIntNum(0, 5);
-                // console.log(index);
-
                 lat = randomGPS(33.464671, 33.664671);
                 lng = randomGPS(118.859960, 118.959960);
                 // console.log(lat + '|' + lng);
                 date[index].coord = lat + '|' + lng;
-                tempList.push(date[index]);
+                b.data.push(date[index]);
             }
-            return tempList;
+            return b;
         }
         //指令2
         //GETMEN命令获得所有人员基本数据并处理获得的数据
@@ -986,12 +985,19 @@
                 type: "GET",
                 data: { funTypeName: "GETMEN" },
                 dataType: "JSON",
-                success: function (res) {
+                success: function (respond) {
                     //需返回一个状态 status
                     //{"status":true/false,"data":{.....}}
-                    if (res.status) {
+
+                    // var dataReceivedFromServer = {//接受到的人员数据
+                    //     "icode": "", 
+                    //      "msg": "GETMEN",
+                    //     "data": "GETMEN:id_Flag=121234|name_attrib=红队;"
+                    // }
+                    if (respond.msg == "GETMEN") {
                         //成功返回人员信息
-                        var data = res.data;
+                        var data = respond.data;
+                        data = data.replace("GETMEN:", "");
                         data = data.split(";");
                         for (let i = 0; i < data.length; i++) {
                             data[i].length < 1 && data.splice(i)
@@ -1082,6 +1088,7 @@
             // })
 
         }
+        //指令1
         //后台获取每个ID的状态并更新
         function sendAjaxs(IDList) {
             var index = 0;
@@ -1101,22 +1108,44 @@
                         id_Flag: IDList[index],
                     },
                     dataType: "JSON",
-                    success: function (res) {
-                        var li = document.querySelector('li[data-id=' + '"' + (res.id_Flag) + '"' + ']');
-                        li.setAttribute("data-hit_state", res.hit_state);
-                        li.setAttribute("data-NumberOfRevive", res.cts_revive);
-                        li.setAttribute("data-hp", res.blood_volume);
-                        li.setAttribute("data-DamageDescription", res.disc_damage);
-                        index++;
-                        sendAjax();
+                    success: function (respond) {
+                        // var dataReceivedFromServer = {//接受到的人员数据
+                        //     "icode": "", "msg": "LIVINGSTATE",
+                        //     "data": "LIVINGSTATE:id_Flag=121234|hit_state=无|cts_revive=0|blood_volume=80;"
+                        // }
+                        if (respond.msg == "LIVINGSTATE") {
+                            var data = respond.data;
+                            data = data.replace("LIVINGSTATE:", "");
+                            data = data.split(";");
+                            var json = {}
+                            for (let i = 0; i < data.length; i++) {
+                                data[i].length < 1 && data.splice(i)
+                                if (data[i]) {
+                                    var str = data[i].split("|")
+                                    str.forEach(res => {
+                                        var temp = [];
+                                        temp = res.split("=");
+                                        json[temp[0]] = temp[1];
+                                    })
+                                }
+                            }
+
+                            var li = document.querySelector('li[data-id=' + '"' + (json.id_Flag) + '"' + ']');
+                            li.setAttribute("data-hit_state", json.hit_state);
+                            li.setAttribute("data-NumberOfRevive", parseInt(json.cts_revive));
+                            li.setAttribute("data-hp", parseInt(json.blood_volume));
+                            li.setAttribute("data-DamageDescription", json.disc_damage);
+                            index++;
+                            sendAjax();
+                        }
                     },
                     error: function () {
-                        console.log(IDList[index] + "ajax请求错误");
+                        console.log(IDList[index] + "ajax请求错误(LIVINGSTATE)");
                     }
                 })
             }
         }
-        //获取比赛具体分钟数
+        //获取比赛具体分钟数指令
         function getGameTime() {
             $.ajax({
                 url: "http://localhost:8090/servlet/TeamManage?funTypeName=param&pname=gamelong&pvalue=",
@@ -1139,7 +1168,7 @@
             });
 
         }
-
+/************************   WebSocket  *********************************/
         function onMessage(event) {
             console.log("服务器说：" + event.data);
         }
@@ -1159,6 +1188,8 @@
                 return false;
             }
         }
+/************************   WebSocket  *********************************/
+
         function saveAsJson(str) {
             const blob = new Blob([str], { type: "application/json;charset=utf-8" });
             const href = URL.createObjectURL(blob);
