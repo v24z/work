@@ -186,7 +186,8 @@
         }
 
         /* 模态框 */
-        .mask {
+        .mask,
+        .resultMask {
             position: absolute;
             top: 0;
             bottom: 0;
@@ -198,7 +199,8 @@
             display: none;
         }
 
-        .modal {
+        .modal,
+        .gameResultModal {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -217,12 +219,21 @@
             padding: 0 15px;
         }
 
-        .modal .modal-header p {
+        .gameResultModal .modal-header {
+            height: 50px;
+            border-bottom: 1px solid #f5f5f5;
+            padding: 0 15px;
+            text-align: center;
+        }
+
+        .modal .modal-header p,
+        .gameResultModal .modal-header p {
             line-height: 50px;
             display: inline-block;
         }
 
-        .modal .modal-header .title {
+        .modal .modal-header .title,
+        .gameResultModal .modal-header .title {
             font-size: 18px;
             color: #333;
         }
@@ -235,8 +246,23 @@
             cursor: default;
         }
 
-        .modal .modal-content {
-            min-height: 100px;
+        .modal #modal-content {
+            min-height: 80px;
+            text-align: center;
+            padding-top: 30px;
+        }
+
+        .gameResultModal #modal-content {
+            min-height: 80px;
+            text-align: center;
+        }
+
+        .gameResultModal #modal-content .result {
+            background-color: #409EFF;
+            line-height: 80px;
+            font-weight: 700;
+            font-size: 40px;
+
         }
 
         .modal .modal-footer .btn {
@@ -248,14 +274,25 @@
             border: none;
         }
 
-        .modal .modal-footer {
+        .gameResultModal .modal-footer .btn {
+            padding: 0 20px;
+            height: 36px;
+            line-height: 36px;
+            color: white;
+            background: #df5454;
+            border: none;
+        }
+
+        .modal .modal-footer,
+        .gameResultModal .modal-footer {
             border-top: 1px solid #f5f5f5;
             padding: 15px;
-            text-align: right;
+            text-align: center;
 
         }
 
-        .container::after {
+        .container::after,
+        .gameResultContainer::after {
             content: "";
             display: block;
             clear: both;
@@ -315,7 +352,9 @@
             //*********************功能函数*******************************************           
             //************************************************************************           
             // 每秒钟更新倒计时
-            countDownTimer = setInterval(updateCountdown, 1000);
+            countDownTimer = setInterval(function () {
+                updateCountdown();
+            }, 1000);
             updatePlayersHpDisplay();
             loadMap();                  //加载地图
             loadPlayerPoint(".leftPlayers");      //加载蓝方
@@ -344,17 +383,28 @@
             mouseEnterPlayerIconEvent(".rightPlayers");
             playersIconDoubleClickEvent(".leftPlayers");
             playersIconDoubleClickEvent(".rightPlayers");
+
             console.log('leftPlayerInfoJsonList');
             console.log(leftPlayerInfoJsonList);
-
+            //**********双击模态框***************//
             container = document.getElementsByClassName("container")[0];
             mask = document.getElementsByClassName("mask")[0];
             modal = document.getElementsByClassName("modal")[0];
             closes = document.getElementsByClassName("close");
-            confirmBtn = document.querySelector('#confirmBtn')
+            confirmBtn = document.querySelector('#confirmBtn');
             confirmBtn.onclick = confirmBtnEvent;
             closes[0].onclick = closeModal;
             closes[1].onclick = closeModal;
+            //**********双击模态框***************//
+
+            //**********对战结果模态框*************//
+            gameResultContainer = document.querySelector("gameResultContainer");
+            resultMask = document.getElementsByClassName("resultMask")[0];
+            resultModal = document.getElementsByClassName("gameResultModal")[0];
+            endBtn = document.querySelector('#endBtn')
+            endBtn.onclick = endBtnEvent;
+            //**********对战结果模态框*************//
+
             webSocket.onerror = function (event) {
                 onError(event)
             };
@@ -367,6 +417,7 @@
                 onMessage(event)
             };
         }
+
         {
             var client = null;					//成功连接后的客户端对象
             var cnn_options = {					//连接MQTT的参数
@@ -466,6 +517,9 @@
         }
         //////////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////
+
+        ///////**********************模态框*************************************/////
+        /***双击模态框***/
         function closeModal() {
             mask.style.display = "none";
             modal.style.display = "none";
@@ -487,13 +541,29 @@
             mask.style.display = "none";
             modal.style.display = "none";
         }
+        /***双击模态框***/
+
+        /******对战结果模态框*******/
+        function resultShow(content) {
+            resultMask.style.display = "block";
+            resultModal.style.display = "block";
+            document.querySelector("#contentDisply").innerText = content;
+        }
+
+        function endBtnEvent() {
+            resultMask.style.display = "none";
+            resultModal.style.display = "none";
+        }
+        /******对战结果模态框*******/
+        ///////**********************模态框*************************************/////
 
         function test() {
             var dataReceivedFromServer = {//接受到的人员数据
                 "icode": "", "msg": "GETMEN",
-                "data": "id_Flag=121234|name_attrib=红队;id_Flag=87654|name_attrib=红队;id_Flag=334455|name_attrib=红队;id_Flag=34563456|name_attrib=红队;id_Flag=234532456|name_attrib=蓝队;"
+                "data": "GETMEN:id_Flag=121234|name_attrib=红队;id_Flag=87654|name_attrib=红队;id_Flag=334455|name_attrib=红队;id_Flag=34563456|name_attrib=红队;id_Flag=234532456|name_attrib=蓝队;"
             }
             var data = dataReceivedFromServer.data;
+            data = data.replace("GETMEN:", "");
             data = data.split(";");
             for (let i = 0; i < data.length; i++) {
                 data[i].length < 1 && data.splice(i)
@@ -638,7 +708,7 @@
                     CountPlayersSurvivorsNumber(".rightPlayers", ".redTeamSurvivors");
                     // console.log(event.getAttribute('data-hp'));
                     var playerID = event.getAttribute('data-id');
-
+                    checkVictory();
                     $.ajax({
                         url: "http://localhost:8090/servlet/ShootData",
                         type: "GET",
@@ -682,8 +752,7 @@
                 clearInterval(testTimer);
                 webSocket.close()
                 document.getElementById("countdown").textContent = "00:00";
-                console.log('jsonPathList');
-                console.log(jsonPathList);
+                checkVictoryWhenTimerOut();
                 return;
             }
             // 计算剩余的分钟和秒数
@@ -1168,7 +1237,7 @@
             });
 
         }
-/************************   WebSocket  *********************************/
+        /************************   WebSocket  *********************************/
         function onMessage(event) {
             console.log("服务器说：" + event.data);
         }
@@ -1188,7 +1257,7 @@
                 return false;
             }
         }
-/************************   WebSocket  *********************************/
+        /************************   WebSocket  *********************************/
 
         function saveAsJson(str) {
             const blob = new Blob([str], { type: "application/json;charset=utf-8" });
@@ -1206,6 +1275,81 @@
 
             saveAsJson(JSON.stringify(IDAndPathJsonList))
 
+        }
+
+        function getGameResult() {
+            var blueScore = parseInt(document.querySelector('blueTeamSurvivors').innerText);
+            var redScore = parseInt(document.querySelector('redTeamSurvivors').innerText);
+            if (blueScore > redScore) {
+                resultShow("蓝队胜利！")
+            } else if (blueScore < redScore) {
+                resultShow("红队胜利！")
+
+            } else {
+                resultShow("平手！")
+
+            }
+        }
+        //判断是否否和胜利条件
+        function checkVictory() {
+            var blueScore = 0
+            var redScore = 0
+
+            var blueSurvivors = 0;
+            var liList = document.querySelector(".leftPlayers").querySelectorAll("li")
+            for (let i = 0; i < liList.length; i++) {
+                if (liList[i].getAttribute('data-hp') > 0) {
+                    ++blueSurvivors;
+                }
+            }
+            var redSurvivors = 0;
+            var liList = document.querySelector(".rightPlayers").querySelectorAll("li")
+            for (let i = 0; i < liList.length; i++) {
+                if (liList[i].getAttribute('data-hp') > 0) {
+                    ++redSurvivors;
+                }
+            }
+
+            if (blueSurvivors == 0) {
+
+                clearInterval(countDownTimer);
+                clearInterval(setLeftTeamRandomLatLngTimer);
+                clearInterval(setRightTeamRandomLatLngTimer);
+                clearInterval(testTimer);
+                resultShow("红队胜利！");
+
+
+            } else if (redSurvivors == 0) {
+                clearInterval(countDownTimer);
+                clearInterval(setLeftTeamRandomLatLngTimer);
+                clearInterval(setRightTeamRandomLatLngTimer);
+                clearInterval(testTimer);
+                resultShow("蓝队胜利！");
+            }
+        }
+        //当倒计时结束后，但两队均没有出现整队失败的情况时
+        function checkVictoryWhenTimerOut(){
+            var blueSurvivors = 0;
+            var liList = document.querySelector(".leftPlayers").querySelectorAll("li")
+            for (let i = 0; i < liList.length; i++) {
+                if (liList[i].getAttribute('data-hp') > 0) {
+                    ++blueSurvivors;
+                }
+            }
+            var redSurvivors = 0;
+            var liList = document.querySelector(".rightPlayers").querySelectorAll("li")
+            for (let i = 0; i < liList.length; i++) {
+                if (liList[i].getAttribute('data-hp') > 0) {
+                    ++redSurvivors;
+                }
+            }
+            if(blueSurvivors>redSurvivors){
+                resultShow("蓝队领先！");
+            }else if(blueSurvivors<redSurvivors){
+                resultShow("红队领先！");
+            }else {
+                resultShow("平")
+            }
         }
     </script>
 
@@ -1246,6 +1390,8 @@
     </div>
 
     <div id='map'></div>
+
+
     <div class="container">
         <div class="modal">
             <div class="modal-header">
@@ -1264,7 +1410,21 @@
         <div class="mask"></div>
     </div>
 
+    <div class="gameResultContainer">
+        <div class="gameResultModal">
+            <div class="modal-header">
+                <p class="title">比赛结果</p>
+            </div>
+            <div id="modal-content">
+                <p class="result" id="contentDisply">result</p>
+            </div>
+            <div class="modal-footer">
+                <button id="endBtn" class="confirm btn" data-value="">结束</button>
+            </div>
+        </div>
+        <div class="resultMask"></div>
+    </div>
+
 
 </body>
-
 </html>
