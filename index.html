@@ -5,7 +5,10 @@
 <head>
     <meta charset='UTF-8' />
     <!-- <link href="https://cdn.bootcss.com/Buttons/2.0.0/css/buttons.min.css" rel="stylesheet"> -->
+    <link rel="stylesheet" href="./css/style.css">
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.2.1/css/all.min.css">
 
 
     <!-- <link href="https://cdn.bootcss.com/Buttons/2.0.0/css/buttons.min.css" rel="stylesheet"> -->
@@ -32,14 +35,14 @@
 
         .leftTeam {
             position: absolute;
-            top: 10px;
+            top: 200px;
             left: 0;
             z-index: 99;
         }
 
         .rightTeam {
             position: absolute;
-            top: 10px;
+            top: 200px;
             right: 0;
             z-index: 99;
         }
@@ -297,12 +300,17 @@
             display: block;
             clear: both;
         }
+        #msg {
+            /* position: fixed; */
+            z-index: 99;
+        }
     </style>
 
     <script src="leaflet.js"></script>
     <script src="jquery.js"></script>
     <script src="paho-mqtt.js"></script>
     <script src="mymqtt.js"></script>
+    <script src="./js/script.js" defer></script>
 
     <script>
 
@@ -354,6 +362,8 @@
             // 每秒钟更新倒计时
             countDownTimer = setInterval(function () {
                 updateCountdown();
+                display("warning", "ssss");
+                
             }, 1000);
             updatePlayersHpDisplay();
             loadMap();                  //加载地图
@@ -1424,7 +1434,8 @@
         </div>
         <div class="resultMask"></div>
     </div>
-
+    <ul id="msg" class="notifications">
+    </ul>
 
 </body>
 </html>
