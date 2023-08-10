@@ -300,6 +300,7 @@
             display: block;
             clear: both;
         }
+
         #msg {
             /* position: fixed; */
             z-index: 99;
@@ -321,8 +322,8 @@
             liList.forEach(function (res) {
                 IDList.push(res.getAttribute("data-id"));
             })
-            console.log(IDList);
-            sendAjaxs(IDList);
+
+            // sendAjaxs(IDList);
             //************************************************************************           
             //*********************变量***********************************************       
             //************************************************************************  
@@ -338,8 +339,7 @@
             targetTime.setMinutes(targetTime.getMinutes() + gameMinutes); //设置时间
 
             countDownTimer = undefined;  //倒计时计时器
-            setLeftTeamRandomLatLngTimer = undefined;  //加载更新左方队员位置计时器
-            setRightTeamRandomLatLngTimer = undefined;  //加载更新左方队员位置计时器
+
 
             // 创建 Polyline 图层
             polyline = L.polyline([], { color: 'skyblue' }).addTo(map);
@@ -362,21 +362,33 @@
             // 每秒钟更新倒计时
             countDownTimer = setInterval(function () {
                 updateCountdown();
-                display("warning", "ssss");
-                
+
             }, 1000);
-            updatePlayersHpDisplay();
             loadMap();                  //加载地图
             loadPlayerPoint(".leftPlayers");      //加载蓝方
             loadPlayerPoint(".rightPlayers");      //加载蓝方
 
+            var hp="100"
             testTimer = setInterval(function () {
                 //模拟的数据直接是json格式
                 var data = sendDate();
                 console.log(data);
-                leftTeamSetRandomLatLng(jsonMarkerList.leftTeam, data);    //随机位置加载
-                rightTeamSetRandomLatLng(jsonMarkerList.rightTeam, data);
-            }, 10000)
+                // console.log(data);
+                var a = {
+                    'icode': '',
+                    'msg': 'shoot',
+                    'data': [
+                        { "id_Flag": '234532456', "gps": "33.510454|118.949423|110", "hits": '1', "health": hp, "bullets": '12', "lost": '0' },
+                    ]
+                }
+                handleShootData(a);
+                hp-=10;
+                console.log(leftPlayerInfoJsonList);
+
+                // leftTeamSetRandomLatLng(jsonMarkerList.leftTeam, data);    //随机位置加载
+                // rightTeamSetRandomLatLng(jsonMarkerList.rightTeam, data);
+            }, 5000)
+            updatePlayersHpDisplay();
 
             // jsonMarkerList.leftTeam.forEach(function (res, index) {
             //     markerPathDisplay(res, index);
@@ -388,7 +400,7 @@
 
             CountPlayersSurvivorsNumber(".leftPlayers", ".blueTeamSurvivors");  //蓝方幸存人数
             CountPlayersSurvivorsNumber(".rightPlayers", ".redTeamSurvivors");//红方幸存人数
-            ajaxTest();
+            // ajaxTest();
             mouseEnterPlayerIconEvent(".leftPlayers");//点击减少50hp
             mouseEnterPlayerIconEvent(".rightPlayers");
             playersIconDoubleClickEvent(".leftPlayers");
@@ -405,6 +417,8 @@
             confirmBtn.onclick = confirmBtnEvent;
             closes[0].onclick = closeModal;
             closes[1].onclick = closeModal;
+            // display("success","snj")
+
             //**********双击模态框***************//
 
             //**********对战结果模态框*************//
@@ -529,42 +543,44 @@
         //////////////////////////////////////////////////////////////////////////////////
 
         ///////**********************模态框*************************************/////
-        /***双击模态框***/
-        function closeModal() {
-            mask.style.display = "none";
-            modal.style.display = "none";
-        }
-        function show(ID) {
-            mask.style.display = "block";
-            modal.style.display = "block";
-            document.querySelector("#confirmBtn").setAttribute("data-value", ID);
-            document.querySelector('#modal-content').innerHTML = '  确认恢复ID为' + ID + "的用户HP？";
-        }
-        function confirmBtnEvent() {
-            var ID = document.querySelector("#confirmBtn").getAttribute("data-value");
-            ResetPlayerStatus(ID);
-            updatePlayersHpDisplay();
-            CountPlayersSurvivorsNumber(".leftPlayers", ".blueTeamSurvivors");
-            CountPlayersSurvivorsNumber(".rightPlayers", ".redTeamSurvivors");
+        {
+            /***双击模态框***/
+            function closeModal() {
+                mask.style.display = "none";
+                modal.style.display = "none";
+            }
+            function show(ID) {
+                mask.style.display = "block";
+                modal.style.display = "block";
+                document.querySelector("#confirmBtn").setAttribute("data-value", ID);
+                document.querySelector('#modal-content').innerHTML = '  确认恢复ID为' + ID + "的用户HP？";
+            }
+            function confirmBtnEvent() {
+                var ID = document.querySelector("#confirmBtn").getAttribute("data-value");
+                ResetPlayerStatus(ID);
+                updatePlayersHpDisplay();
+                CountPlayersSurvivorsNumber(".leftPlayers", ".blueTeamSurvivors");
+                CountPlayersSurvivorsNumber(".rightPlayers", ".redTeamSurvivors");
 
 
-            mask.style.display = "none";
-            modal.style.display = "none";
-        }
-        /***双击模态框***/
+                mask.style.display = "none";
+                modal.style.display = "none";
+            }
+            /***双击模态框***/
 
-        /******对战结果模态框*******/
-        function resultShow(content) {
-            resultMask.style.display = "block";
-            resultModal.style.display = "block";
-            document.querySelector("#contentDisply").innerText = content;
-        }
+            /******对战结果模态框*******/
+            function resultShow(content) {
+                resultMask.style.display = "block";
+                resultModal.style.display = "block";
+                document.querySelector("#contentDisply").innerText = content;
+            }
 
-        function endBtnEvent() {
-            resultMask.style.display = "none";
-            resultModal.style.display = "none";
+            function endBtnEvent() {
+                resultMask.style.display = "none";
+                resultModal.style.display = "none";
+            }
+            /******对战结果模态框*******/
         }
-        /******对战结果模态框*******/
         ///////**********************模态框*************************************/////
 
         function test() {
@@ -596,6 +612,7 @@
                 res.name_attrib == "蓝队" && bluePlayersIDList.push(res.id_Flag);
                 res.name_attrib == "红队" && redPlayersIDList.push(res.id_Flag);
             })
+            console.log("test的IDLIST:" + IDList);
 
         }
         //修改creatInnerHTML（）
@@ -613,7 +630,7 @@
             var leftStr = "";
             var rightStr = "";
             for (var i = 0; i < bluePlayersIDList.length; i++) {
-                leftStr += '<li data-hp="100" data-id=' + (bluePlayersIDList[i]) + ' data-index=' + (i) + ' data-hit_state=" "' + ' data-NumberOfRevive="0"' + ' data-DamageDescription=" "' + '>';
+                leftStr += '<li data-hp="100" data-id=' + (bluePlayersIDList[i]) + ' data-index=' + (i) + ' data-hit_state=" "' + ' data-NumberOfRevive="0"' + ' data-DamageDescription=" "' + ' data-hit_the_site=" "' + ' data-bullets_remaining="0"' + ' data-bullets_lost="0"' + '>';
                 leftStr += '    <img src="./icon/' + (i + 1) + '.jpg">';
                 leftStr += '    <div class="name">';
                 leftStr += '        <a>' + ("ID" + bluePlayersIDList[i]) + '</a>';
@@ -625,7 +642,7 @@
             }
             document.querySelector(".leftPlayers").innerHTML = leftStr;
             for (var j = 0; j < redPlayersIDList.length; j++) {
-                rightStr += '<li data-hp="100" data-id=' + (redPlayersIDList[j]) + ' data-index=' + (j) + ' data-hit_state=" "' + ' data-NumberOfRevive="0"' + ' data-DamageDescription=" "' + '>';
+                rightStr += '<li data-hp="100" data-id=' + (redPlayersIDList[j]) + ' data-index=' + (j) + ' data-hit_state=" "' + ' data-NumberOfRevive="0"' + ' data-DamageDescription=" "' + ' data-hit_the_site=" "' + ' data-bullets_remaining="0"' + ' data-bullets_lost="0"' + '>';
                 rightStr += '    <img src="./icon/' + (j + 1 + bluePlayersIDList.length) + '.jpg">';
                 rightStr += '    <div class="name">';
                 rightStr += '        <a>' + ("ID" + redPlayersIDList[j]) + '</a>';
@@ -712,7 +729,7 @@
                             event.style.backgroundColor = 'gray';
                         }
                     }
-
+                    // handleOfflineplayer();
                     updatePlayersHpDisplay();
                     CountPlayersSurvivorsNumber(".leftPlayers", ".blueTeamSurvivors");
                     CountPlayersSurvivorsNumber(".rightPlayers", ".redTeamSurvivors");
@@ -741,6 +758,9 @@
                 });
             });
         }
+
+
+
         //更新hp显示
         function updatePlayersHpDisplay() {
             var liList = document.querySelectorAll('li');
@@ -757,8 +777,6 @@
             // 如果倒计时结束，则显示相应的提示信息
             if (timeDifference <= 0) {
                 clearInterval(countDownTimer);
-                clearInterval(setLeftTeamRandomLatLngTimer);
-                clearInterval(setRightTeamRandomLatLngTimer);
                 clearInterval(testTimer);
                 webSocket.close()
                 document.getElementById("countdown").textContent = "00:00";
@@ -916,12 +934,12 @@
         }
         //左队锚点随机运动
         function markerMove(marker, index = 0, dataReceivedFromServer) {
-            var gps = dataReceivedFromServer.coord.split('|');
-            var lat = parseFloat(gps[0]);
-            var lng = parseFloat(gps[1]);
+            var gps = dataReceivedFromServer.gps.split('|');
+            var lat = parseFloat(gps[0]);//经度
+            var lng = parseFloat(gps[1]);//纬度
             if (leftPlayerInfoJsonList[index].hp > 0) {
                 for (let i = 0; i < IDAndPathJsonList.length; i++) {
-                    if (IDAndPathJsonList[i].id == dataReceivedFromServer.id) {
+                    if (IDAndPathJsonList[i].id == dataReceivedFromServer.id_Flag) {
                         IDAndPathJsonList[i].path.push([lat, lng]);
                         break;
                     }
@@ -933,7 +951,7 @@
                 var newLatlngPoint = L.latLng(lat, lng);
                 leftPlayerInfoJsonList[index].hp > 0 && marker.setLatLng(newLatlngPoint);
                 //处理收到的json消息，提取id与处理经纬度转成字符传给servlet接口
-                var dataToSend = { "id": dataReceivedFromServer.id, "path": [lat, lng] };
+                var dataToSend = { "id": dataReceivedFromServer.id_Flag, "path": [lat, lng] };
                 var jsonToString = JSON.stringify(dataToSend);
                 start(jsonToString);
             }
@@ -965,12 +983,12 @@
 
         //右队锚点随机运动
         function rightMarkerMove(marker, index = 0, dataReceivedFromServer) {
-            var gps = dataReceivedFromServer.coord.split('|');
+            var gps = dataReceivedFromServer.gps.split('|');
             var lat = parseFloat(gps[0]);
             var lng = parseFloat(gps[1]);
             if (rightPlayerInfoJsonList[index].hp > 0) {
                 for (let i = 0; i < IDAndPathJsonList.length; i++) {
-                    if (IDAndPathJsonList[i].id == dataReceivedFromServer.id) {
+                    if (IDAndPathJsonList[i].id == dataReceivedFromServer.id_Flag) {
                         IDAndPathJsonList[i].path.push([lat, lng]);
                         break;
                     }
@@ -982,9 +1000,9 @@
                 var newLatlngPoint = L.latLng(lat, lng);
                 rightPlayerInfoJsonList[index].hp > 0 && marker.setLatLng(newLatlngPoint);
                 //处理收到的json消息，提取id与处理经纬度转成字符传给servlet接口
-                var dataToSend = { "id": dataReceivedFromServer.id, "path": [lat, lng] };
+                var dataToSend = { "id": dataReceivedFromServer.id_Flag, "path": [lat, lng] };
                 var jsonToString = JSON.stringify(dataToSend);
-                start(jsonToString);
+                start(jsonToString);//发送给后端
             }
         }
 
@@ -1027,30 +1045,20 @@
         //模拟发送的数据(修改)
         function sendDate() {
             var date = [
-                // { "id": "0", "coord": "113.123|24.369", "msg": 0 },
-                // { "id": "1", "coord": "112.123|24.369", "msg": 0 },
-                // { "id": "2", "coord": "111.123|24.369", "msg": 0 },
-                // { "id": "3", "coord": "113.123|24.369", "msg": 0 },
-                // { "id": "4", "coord": "113.123|24.369", "msg": 0 },
-                // { "id": "5", "coord": "113.123|24.369", "msg": 0 },
-                // { "id": "6", "coord": "113.123|24.369", "msg": 0 },
-                // { "id": "7", "coord": "113.123|24.369", "msg": 0 },
-                // { "id": "8", "coord": "113.123|24.369", "msg": 0 },
-                // { "id": "9", "coord": "113.123|24.369", "msg": 0 },
-                { "id_Flag": "121234", "coord": "113.123|24.369", "msg": 0 },
-                { "id_Flag": "87654", "coord": "112.123|24.369", "msg": 0 },
-                { "id_Flag": "334455", "coord": "111.123|24.369", "msg": 0 },
-                { "id_Flag": "34563456", "coord": "113.123|24.369", "msg": 0 },
-                { "id_Flag": "234532456", "coord": "113.123|24.369", "msg": 0 },
+                { "id_Flag": "121234", "gps": "113.123|24.369", "msg": 0 },
+                { "id_Flag": "87654", "gps": "112.123|24.369", "msg": 0 },
+                { "id_Flag": "334455", "gps": "111.123|24.369", "msg": 0 },
+                { "id_Flag": "34563456", "gps": "113.123|24.369", "msg": 0 },
+                { "id_Flag": "234532456", "gps": "113.123|24.369", "msg": 0 },
             ];
-            b = { "icode": "", "msg": "status", "data": [] }//模拟接受到的数据
+            var b = { "icode": "", "msg": "status", "data": [] }//模拟接受到的数据
             var index, lat, lng;
             for (let i = 0; i < 2; i++) {
                 index = randomIntNum(0, 5);
                 lat = randomGPS(33.464671, 33.664671);
                 lng = randomGPS(118.859960, 118.959960);
                 // console.log(lat + '|' + lng);
-                date[index].coord = lat + '|' + lng;
+                date[index].gps = lat + '|' + lng + '|' + "110";
                 b.data.push(date[index]);
             }
             return b;
@@ -1156,13 +1164,9 @@
             //             alert("更新失败");
             //         }
             //     },
-            //     error: function (jqXHR, textStatus, errorThrown) {
-            //         console.log(jqXHR.responseText);
-            //         console.log(jqXHR.status);
-            //         console.log(jqXHR.readyState);
-            //         console.log(jqXHR.statusText);
-            //         console.log(textStatus);
-            //         console.log(errorThrown);
+            //     error: function () {
+            //         console.log(ID+" RISE失败");
+
             //     }
             // })
 
@@ -1321,24 +1325,17 @@
             }
 
             if (blueSurvivors == 0) {
-
                 clearInterval(countDownTimer);
-                clearInterval(setLeftTeamRandomLatLngTimer);
-                clearInterval(setRightTeamRandomLatLngTimer);
                 clearInterval(testTimer);
                 resultShow("红队胜利！");
-
-
             } else if (redSurvivors == 0) {
                 clearInterval(countDownTimer);
-                clearInterval(setLeftTeamRandomLatLngTimer);
-                clearInterval(setRightTeamRandomLatLngTimer);
                 clearInterval(testTimer);
                 resultShow("蓝队胜利！");
             }
         }
         //当倒计时结束后，但两队均没有出现整队失败的情况时
-        function checkVictoryWhenTimerOut(){
+        function checkVictoryWhenTimerOut() {
             var blueSurvivors = 0;
             var liList = document.querySelector(".leftPlayers").querySelectorAll("li")
             for (let i = 0; i < liList.length; i++) {
@@ -1353,14 +1350,100 @@
                     ++redSurvivors;
                 }
             }
-            if(blueSurvivors>redSurvivors){
+            if (blueSurvivors > redSurvivors) {
                 resultShow("蓝队领先！");
-            }else if(blueSurvivors<redSurvivors){
+            } else if (blueSurvivors < redSurvivors) {
                 resultShow("红队领先！");
-            }else {
+            } else {
                 resultShow("平")
             }
         }
+        //处理离线人员的提示
+        function handleOfflineplayer() {
+            var dataFromServer = { "icode": "", "msg": "status", "data": [{ "id_Flag": '01', "STATUS": 'on' }, { "id_Flag": '02', "STATUS": 'off' }, { "id_Flag": '03', "STATUS": 'off' }] }
+            var data = dataFromServer.data;
+            for (let i = 0; i < data.length; i++) {
+                console.log(1);
+                if (data[i].STATUS == "off") {
+                    display("warning", data[i].id_Flag + " offline");
+                }
+
+            }
+            CountPlayersSurvivorsNumber(".leftPlayers", ".blueTeamSurvivors");  //蓝方幸存人数
+            CountPlayersSurvivorsNumber(".rightPlayers", ".redTeamSurvivors");//红方幸存人数
+            checkVictory()
+        }
+
+        //代替鼠标进入事件
+        //处理mqtt传来的msg为shoot的数据，并渲染页面
+        function handleShootData(dataFromServer) {
+            var data = dataFromServer.data;
+            var playersIDwaitToBeReported = [];
+            for (let i = 0; i < data.length; i++) {
+                var getPlayerByID = document.querySelector('li[data-id=' + '"' + (data[i].id_Flag) + '"' + ']');
+                
+                console.log(getPlayerByID);
+                var getPlayerCurrentHpValue = getPlayerByID.getAttribute("data-hp");//获取当前hp值
+                if (getPlayerCurrentHpValue != data[i].health) {
+                    playersIDwaitToBeReported.push(data[i].id_Flag);//保存hp发生变化的id
+                }
+                //渲染元素
+                getPlayerByID.setAttribute("data-hp", data[i].health);
+                getPlayerByID.setAttribute("data-hit_the_site", data[i].hits);
+                getPlayerByID.setAttribute("data-bullets_remaining", data[i].bullets);
+                getPlayerByID.setAttribute("data-bullets_lost", data[i].lost);
+                var playerIndex = getPlayerByID.getAttribute("data-index");
+                // 更新json
+                if(getPlayerByID.parentNode.getAttribute("class").includes("left")){
+                    leftPlayerInfoJsonList[playerIndex].hp = data[i].health;
+
+                }else{
+                    rightPlayerInfoJsonList[playerIndex].hp = data[i].health;
+
+                }
+
+            }
+            leftTeamSetRandomLatLng(jsonMarkerList.leftTeam, dataFromServer);    //位置加载    替代立即执行函数中的  testTimer计时器
+            rightTeamSetRandomLatLng(jsonMarkerList.rightTeam, dataFromServer);//或者可以分开 与handleShootData（）放到一起？？？？
+            updatePlayersHpDisplay();
+            CountPlayersSurvivorsNumber(".leftPlayers", ".blueTeamSurvivors");
+            CountPlayersSurvivorsNumber(".rightPlayers", ".redTeamSurvivors");
+            checkVictory();
+            sendHpChangedAjaxs(playersIDwaitToBeReported);//发送hp发生变化的信息
+        }
+        //用于hp发生变化，发送更新指令
+        function sendHpChangedAjaxs(idList) {
+            var index = 0;
+            sendAjax();
+            function sendAjax() {
+                if (index >= idList.length) {
+                    return;
+                }
+                var liExist = document.querySelector('li[data-id=' + '"' + (idList[index]) + '"' + ']');
+                $.ajax({
+                    url: "http://localhost:8090/servlet/ShootData",
+                    type: "GET",
+                    async: true,//异步
+                    data: {
+                        funTypeName: "UPDAMAGE",
+                        id_Flag: idList[index],
+                        curblood: liExist.getAttribute("data-hp"),
+                        describe: liExist.getAttribute('data-damagedescription')
+                    },
+                    // dataType: "JSON",
+                    success: function (respond) {
+                        index++;
+                        sendAjax();
+                    },
+                    error: function () {
+                        console.log(idList[index] + "ajax请求错误(UPDAMAGE)");
+                        index++;
+                        sendAjax();
+                    }
+                })
+            }
+        }
+
     </script>
 
     <title>Gaoded statellite Map</title>
@@ -1370,7 +1453,7 @@
     <div class="leftTeam">
         <button onclick="downLoad()">点击我下载文件</button>
 
-        <button id="ajaxTest">test</button>
+        <!-- <button id="ajaxTest">test</button> -->
 
         <ul class="leftPlayers">
 
@@ -1438,4 +1521,5 @@
     </ul>
 
 </body>
+
 </html>
